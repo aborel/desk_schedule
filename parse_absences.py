@@ -102,6 +102,12 @@ def parse_absences(htmlfile):
                 events = [div for div in all_divs if 'fc-timeline-event-harness' in div.get('class')]
                 print(f'{len(events)} events')
                 print(librarians[ridx], len(inner_divs), [(div.get('class'), get_all_text(div).strip(), div.get('style')) for div in events])
+                for event in events:
+                    event_style_list = [x.strip() for x in event.get('style').split(';') if x.find(':') > 0]
+                    styles = {k.split(':')[0].strip(): k.split(':')[1].strip() for k in event_style_list}
+                    start = int(styles['left'].replace('px', '')) // day_width
+                    end = abs(int(styles['right'].replace('px', ''))) // day_width -1
+                    print(librarians[ridx], get_all_text(event).strip(), 'from day', start, 'to day', end)
 
     except IndexError as e:
         print('no table found?', e)
