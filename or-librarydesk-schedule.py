@@ -130,6 +130,9 @@ def main():
                 else:
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 1).OnlyEnforceIf(oneLibrariaPerShift)
                     n_conditions += 1 
+    
+    model.Proto().assumptions.append(oneLibrariaPerShift.Index())
+
     # WIP : each librarian is using at most 1 seat at a time!
     oneShiftAtATime = model.NewBoolVar('oneShiftAtATime')
     for d in all_days:
@@ -137,6 +140,7 @@ def main():
             for n in all_librarians:
                 model.Add(sum(shifts[(n, d, s, lo)] for lo in all_locations) <= 1).OnlyEnforceIf(oneShiftAtATime)
                 n_conditions += 1 
+    model.Proto().assumptions.append(oneShiftAtATime.Index())
 
     # Each librarian works at most max_shifts_per_day=2 shift per day.
     # TODO: make that 2 SUCCESSIVE shifts if requested
@@ -165,10 +169,7 @@ def main():
         model.Add(sum([delta_vars[s] for s in all_shifts[0:-run_length-1]])*run_length <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
             for d in all_days for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
         n_conditions += 1
-                #deltas = [(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) for s in all_shifts[0:-run_length-1]]
-                #deltas2 = [delta*delta for delta in deltas]
-                #model.Add(sum(deltas2) <= max_shift - run_length)
-                
+
 
         # only assign max. one 18-20 shift for a given librarian
         maxOneLateShift = model.NewBoolVar('maxOneLateShift')
@@ -183,6 +184,11 @@ def main():
             model.Add(sum(shifts[(n, d, s, lo)]
                 for s in all_shifts[-2:] for lo in all_locations) <= 1).OnlyEnforceIf(noSeventeenToTwenty)
             n_conditions += 1
+
+    model.Proto().assumptions.append(preferedRunLength.Index())
+    model.Proto().assumptions.append(maxOneLateShift.Index())
+    model.Proto().assumptions.append(noSeventeenToTwenty.Index())
+
 
     # Try to distribute the shifts evenly, so that each librarian works
     # his quota of shifts (or quota - 1) on the active or reserve locations
@@ -233,6 +239,12 @@ def main():
         n_conditions += 1
     
     sector_score = len(all_days)*[{}]
+
+    model.Proto().assumptions.append(noOutOfTimeShift.Index())
+    model.Proto().assumptions.append(minActiveShifts.Index())
+    model.Proto().assumptions.append(minReserveShifts.Index())
+    model.Proto().assumptions.append(maxActiveShifts.Index())
+    model.Proto().assumptions.append(maxReserveShifts.Index())
     
     for d in all_days:
         for sector in sector_semester_quotas:
