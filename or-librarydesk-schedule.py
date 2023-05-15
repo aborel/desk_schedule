@@ -148,26 +148,25 @@ def main():
         model.Proto().assumptions.append(oneShiftAtATime.Index())
 
     if rules['maxTwoShiftsPerDay']:
+        # Each librarian works at most max_shifts_per_day=2 shift per day.
+        maxTwoShiftsPerDay = model.NewBoolVar('maxTwoShiftsPerDay')
         for n in all_librarians:
-            delta_vars = []
             for d in all_days:
                 model.Add(sum([shifts[(n, d, s, lo)]
                     for s in all_shifts for lo in all_locations]) +
                 sum([shifts[(n, d, s, lo)]
                     for s in all_shifts[-1:] for lo in all_locations]) <= max_shifts_per_day)
                 n_conditions += 1
+        model.Proto().assumptions.append(maxTwoShiftsPerDay.Index())
 
-    if rules['preferedRunLength']:
-        # Each librarian works at most max_shifts_per_day=2 shift per day.
-        # TODO: make that 2 SUCCESSIVE shifts if requested
+    if rules['preferedRunLength']:        
+        # FIXME: 2 SUCCESSIVE shifts if requested
         # TODO: mix Accueil and STM shifts over the week?
         preferedRunLength = model.NewBoolVar('preferedRunLength')
         for n in all_librarians:
             run_length = librarians[n]['prefered_length']
             delta_vars = []
-            for d in all_days:
-                
-                
+            for d in all_days:    
                 # Successive shifts preference?
                 # The number of changes from "busy" to "free" or back describes
                 # the number of discontinuous shifts
