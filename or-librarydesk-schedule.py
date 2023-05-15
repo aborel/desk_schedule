@@ -66,6 +66,12 @@ def main():
 
     from work_schedule import librarians, shift_requests, meeting_slots, quota, locations
 
+
+    # What is the longest desk stay that someone requested?
+    max_req_run_length = max([librarian['prefered_length'] for librarian in librarians])
+    # Limit this to the max number of shifts per day
+    max_run_length = min([max_req_run_length, max_shfts_per_day])
+
     num_locations = len(locations.keys())
     num_librarians = len(librarians.keys())
 
@@ -73,6 +79,15 @@ def main():
     all_shifts = range(num_shifts)
     all_days = range(num_days)
     all_locations = range(num_locations)
+
+
+    max_shift = num_shifts-1
+    masks = numpy.zeros(shape=(max_run_length, max_shift, max_shift), dtype=numpy.int8)
+    for rl in range(max_run_length):
+        for offset in range(max_shift-rl):
+            for k in range(rl+1):
+                masks[rl][offset][offset+k] = 1
+
 
     # Creates the model.
     model = cp_model.CpModel()
@@ -120,14 +135,17 @@ def main():
             n_conditions += 1
             successive_shifts = 0
             # Successive shifts preference applicable until 17h only
+            for s in all_shifts[0:-2]:
+                #print(sum([shift_requests[n][d][s][lo] for lo in all_locations]))
+                reduced_shifts = [sum([shifts[(n, d, s, lo)]*shift_requests[n][d][s][lo]]) for lo in all_locations]
+
+            run_length = 0
+            for shift in range(len(reduced_shifts)):
+                if reduced_shifts[shift] == 1:
+                    pass
             """
-            reduced_shifts = [sum([shifts[(n, d, s, lo)] for lo in all_locations]) for s in all_shifts[0:-2]]
-            shift_groups = []
-            for key, iter in itertools.groupby(reduced_shifts):
-                shift_groups.append((key, len(list(iter))))
-            print(shift_groups)
-            for shift_group in shift_groups:
-                model.Add(shift_group[0] == 1 and shift_group[1] == librarians[n]['prefered_length'])
+                #model.Add(shift_group[0] == 1 and shift_group[1] == librarians[n]['prefered_length'])
+            
                 n_conditions += 1
             """
 
@@ -150,6 +168,7 @@ def main():
         num_shifts_reserve = 0
         out_of_time_shifts = 0
         for d in all_days:
+            run_length = 0
             for s in all_shifts:
                 for lo in all_locations:
                     if locations[lo]['name'].lower().find('remplacement') < 0:
