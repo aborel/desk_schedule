@@ -68,7 +68,7 @@ def main():
     
     num_locations = len(locations.keys())
 
-    from work_schedule import librarians, shift_requests
+    from work_schedule import librarians, shift_requests, meeting_slots
     num_librarians = len(librarians.keys())
 
     all_librarians = range(num_librarians)
@@ -145,6 +145,13 @@ def main():
                     else:
                         num_shifts_reserve += shifts[(n, d, s, lo)]
                     out_of_time_shifts += shifts[(n, d, s, lo)] * (1-shift_requests[n][d][s][lo])
+                    # Shifts during mandatory meetings also count as out of time
+                    if d == meeting_slots[librarians[n]['sector']][0]:
+                        if s >= meeting_slots[librarians[n]['sector']][1] and meeting_slots[librarians[n]['sector']][2]:
+                            out_of_time_shifts += shifts[(n, d, s, lo)] * 1
+                    if d == meeting_slots['dir'] and librarians[n]['type'] == 'dir':
+                        if s >= meeting_slots['dir'][1] and meeting_slots['dir'][2]:
+                            out_of_time_shifts += shifts[(n, d, s, lo)] * 1
 
         model.Add(out_of_time_shifts <= 1)
         n_conditions += 1
