@@ -6,6 +6,8 @@ from numpy import array
 
 # based on K_Guichets//K2_Guichets_physiques/K2.03_Tournus/quotas_par_guichetier_20190131.JPG
 # TODO: ask for the rule for bl+coordinator
+# TODO: replace with values extracted from the Excel spreadsheet
+"""
 quota = {
     '40': (3, 2),
     '50': (3, 2),
@@ -30,6 +32,7 @@ quota = {
     'coord90': (3, 4),
     'coord100': (3, 4),
 }
+"""
 
 sector_semester_quotas = {
     'search': 6,
@@ -43,6 +46,8 @@ sector_holiday_quotas = {
     'spi': 1
 }
 
+
+# TODO: replace with values extracted from the Excel spreadsheet
 locations = {
     0: 'Accueil 1',
     1: 'Accueil 2',
@@ -68,7 +73,7 @@ def main():
     
     num_locations = len(locations.keys())
 
-    from work_schedule import librarians, shift_requests, meeting_slots
+    from work_schedule import librarians, shift_requests, meeting_slots, quota
     num_librarians = len(librarians.keys())
 
     all_librarians = range(num_librarians)
