@@ -119,7 +119,7 @@ def read_work_schedules(xlsx_filename):
                         else:
                             if not x[-1].isdigit():
                                 x += '00'
-                            x = x.lower().replace('/','-')
+                            x = x.lower().replace('/','-').replace("–", "-")
                             x = x.replace('.','h').replace(':','h').replace('hh','h').replace('h-','h00-')
                             boundaries = x.split('-')
                             if len(boundaries) < 2:
