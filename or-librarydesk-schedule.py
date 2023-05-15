@@ -65,7 +65,7 @@ def main():
     # The optimal assignment maximizes the number of fulfilled shift requests.
     num_shifts = 11
     num_days = 5
-    # TODO: deal with replacement shifts later
+    
     num_locations = len(locations.keys())
 
     from work_schedule import librarians, shift_requests
@@ -78,6 +78,8 @@ def main():
 
     # Creates the model.
     model = cp_model.CpModel()
+    # Let's see how many conditions we define
+    n_conditions = 0
 
     # Creates shift variables.
     # shifts[(n, d, s, lo)]: 
@@ -98,10 +100,15 @@ def main():
             for lo in all_locations:
                 if (lo == 2 or lo == 4) and s < 2:
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0)
+                    n_conditions += 1
                 elif s == all_shifts[-1] and (lo > 0 or d == all_days[-1]):
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0)
+                    n_conditions += 1
                 else:
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 1)
+                    n_conditions += 1
+
+    # TODO only assign 1 18-20 shift for a given librarian
 
     # Each librarian works at most 3 shift per day.
     # TODO: make that 2 SUCCESSIVE shifts
@@ -109,6 +116,7 @@ def main():
         for d in all_days:
             model.Add(sum(shifts[(n, d, s, lo)]
                 for s in all_shifts for lo in all_locations) <= 3)
+            n_conditions += 1
 
     # Try to distribute the shifts evenly, so that each librarian works
     # min_shifts_per_librarian shifts. If this is not possible, because the total
@@ -137,11 +145,16 @@ def main():
                     out_of_time_shifts += shifts[(n, d, s, lo)] * (1-shift_requests[n][d][s][lo])
 
         model.Add(out_of_time_shifts <= 1)
+        n_conditions += 1
         #model.Add(min_shifts_per_librarian <= num_shifts_worked)
         model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - 1)
+        n_conditions += 1
         model.Add(num_shifts_reserve >= quota[librarians[n]['type']][1] - 1)
+        n_conditions += 1
         model.Add(num_shifts_worked <= quota[librarians[n]['type']][0])
+        n_conditions += 1
         model.Add(num_shifts_reserve <= quota[librarians[n]['type']][1])
+        n_conditions += 1
 
     
     sector_score = len(all_days)*[{}]
@@ -205,14 +218,89 @@ def main():
         s1 = f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]}'
         s2 = f' and acting as a reserve for {score_reserve}/{quota[librarians[n]["type"]][1]} shifts'
         print(s1 + s2)
+
+    # Prepare HTML output
+
+    main_title = "Proposed desk schedule</title>"
+    
+    header = f"<title>{main_title}</head>\n"
+
+    header += """<style>
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#schedule {  
+  border collapse: collapse;
+  width: 100%;
+}
+
+#schedule td, #schedule th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#schedule tr:nth-child(even){background-color: #f2f2f2;}
+
+#schedule tr:hover {background-color: #ddd;}
+
+#schedule th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #04AA6D;
+  color: white;
+}
+</style>"""
+
+    title = f"<h1>{main_title}</h1>"
+
+    score = f"Solution score = {solver.ObjectiveValue()} (max possible result {n_conditions})"
+    stat_details = f'{solver.ResponseStats()}'
+
+    table = '<div><table id="schedule">\n'
+    table += "<tr>\n"
+    table += "<th>Time</th>"
+    for d in all_days:
+        table += f"<th>{weekdays[d]}</th>"
+
+    table += "\n</tr>"
+
+    for s in all_shifts:
+        for lo in all_locations:
+            table += "<tr>\n"
+            table += f"<td>{s+8}:00-{s+9}:00 {locations[lo]}</td>"
+            for d in all_days:
+                cell = "<td>N/A</td>"
+                for n in all_librarians:
+                    if solver.Value(shifts[(n, d, s, lo)]) == 1:
+                        cell = f"<td>{librarians[n]['name']}</td>"
+                table += cell
+
+
+            table += "\n</tr>\n"
+
+
+    table +=  "</table></div>"
+
+    body = f"<body>\n{title}\n<div>{score}</div><pre><code>"
+    body += f"<h2>Technical statistics:</h2>\n{stat_details}</code></pre>"
+    body += f"\n{table}</body>"
+
+    html = f"<html>\n{header}\n{body}</html>"
+
+    outfile = open('or-desk-schedule.html', 'w')
+    outfile.write(html)
+    outfile.close()
+
     # Statistics.
 
     print()
-    print('Statistics')
-    print('  - Solution score = %i' % solver.ObjectiveValue(),
-          '(out of', num_librarians * num_locations + num_librarians * 5 + num_days, ')')
-    print(f' - Solution statistics:\n{solver.ResponseStats()}')
-    print('  - wall time       : %f s' % solver.WallTime())
+    print('**Statistics:**')
+    print(f' - {score}')
+    print()
+    print(f"**Solver statistics:**\n{stat_details}")
 
 
 if __name__ == '__main__':
