@@ -25,6 +25,7 @@ meeting_slots = {
 }
 """
 
+# IDEA 2022-02-25 what if we used non-integer hours? Start at 8:30 for example?
 
 def read_work_schedules(xlsx_filename):
     wb_obj = openpyxl.load_workbook(xlsx_filename)
@@ -98,6 +99,7 @@ def read_work_schedules(xlsx_filename):
 
     sheet = wb_obj['séances']
     meeting_slots = {}
+    # TODO definitely not valid if we switch to 2h shifts
     for row in sheet.iter_rows():
         if len(row) > 0:
             if row[0] is not None:
@@ -147,6 +149,7 @@ def read_work_schedules(xlsx_filename):
                     d = -1
                     # Extract extended work hours
                     for x in cells[4:4+max_day]:
+                        # TODO probably not valid for 2h shifts
                         # new day
                         d += 1
                         if x is None or not x[0].isdigit():
@@ -213,8 +216,21 @@ def read_work_schedules(xlsx_filename):
                     rules[name] = (value > 0)
 
 
+    sheet = wb_obj['shifts']
+    shifts = {}
+    for row in sheet.iter_rows():
+        if len(row) > 0:
+            if row[0] is not None:
+                cells = [cell.value for cell in row]
+                if cells[0] is not None:
+                    time = int(cells[0])
+                    try:
+                        value = int(cells[1])
+                    except ValueError:
+                        value = 1
+                    shifts[time] = value
     
-    return availability, librarians, locations, quota, meeting_slots, rules, weekdays
+    return availability, librarians, locations, quota, meeting_slots, rules, weekdays, shifts
 
 
 if __name__ == '__main__':
@@ -223,7 +239,7 @@ if __name__ == '__main__':
         print('Le fichier XLSX doit contenir les horaires étendus des collaborateurs')
         exit(1)
     else:
-        availabilities, librarians, locations, quota, meeting_slots, rules, weekdays = read_work_schedules(sys.argv[1])
+        availabilities, librarians, locations, quota, meeting_slots, rules, weekdays, shifts = read_work_schedules(sys.argv[1])
         outfile = open('work_schedule.py', 'w')
         outfile.write('from numpy import array, int8\n\n')
         outfile.write(f'librarians = {str(librarians)}\n')
@@ -233,3 +249,4 @@ if __name__ == '__main__':
         outfile.write(f'\nquota = {str(quota)}\n')
         outfile.write(f'\nrules = {str(rules)}\n')
         outfile.write(f'\nweekdays = {str(weekdays)}\n')
+        outfile.write(f'\nshifts = {str(shifts)}\n')
