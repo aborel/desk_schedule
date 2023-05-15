@@ -130,6 +130,7 @@ def read_work_schedules(xlsx_filename):
     sheet = wb_obj['séances']
     meeting_slots = {}
     # TEST does this work with 2h shifts?
+    # We want the first and last **unavailable** slots
     for row in sheet.iter_rows():
         if len(row) > 0:
             if row[0] is not None:
@@ -151,14 +152,14 @@ def read_work_schedules(xlsx_filename):
                             if len(minutes) == 0:
                                 minutes = '0'
                             mm = int(minutes)
-                            print('meeting: ', hh, mm, [x[0] for x in shifts if x[0] <= hh + mm])
+                            print('meeting: ', hh + mm, [x[0] for x in shifts if x[0] <= hh + mm])
                             times.append(max([x[0] for x in shifts if x[0] <= hh + mm]))
-                            times.append(min([x[0] for x in shifts if x[0] >= hh + mm]))
+                            times.append(min([x[0] for x in shifts if x[0] > hh + mm]))
                             if times[-1] > shifts[-1][0]:
                                 pass
-                    print(times)
-                    print(shifts)
-                    meeting_slots[group] = (day, [x[0] for x in shifts].index(times[0]), [x[0] for x in shifts].index(times[3]))
+                    print('meeting times:', times)
+                    print('meeting shifts:', shifts)
+                    meeting_slots[group] = (day, [x[0] for x in shifts].index(times[0]), [x[0] for x in shifts].index(times[3]) -1)
 
     sheet = wb_obj['guichetiers']
     n = -1
