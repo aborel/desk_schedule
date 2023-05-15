@@ -149,6 +149,7 @@ def main():
 
     if rules['maxTwoShiftsPerDay']:
         # Each librarian works at most max_shifts_per_day=2 shift per day.
+        # TODO: mix Accueil and STM shifts over the week?
         maxTwoShiftsPerDay = model.NewBoolVar('maxTwoShiftsPerDay')
         for n in all_librarians:
             for d in all_days:
@@ -161,24 +162,25 @@ def main():
 
     if rules['preferedRunLength']:        
         # FIXME: 2 SUCCESSIVE shifts if requested
-        # TODO: mix Accueil and STM shifts over the week?
+        # NOTE: current version seems to favor same-day shifts but not successive?
+        delta_vars = []
         preferedRunLength = model.NewBoolVar('preferedRunLength')
         for n in all_librarians:
-            run_length = librarians[n]['prefered_length']
-            delta_vars = []
-            for d in all_days:    
+            delta_vars.append([])            
+            for d in all_days: 
                 # Successive shifts preference?
                 # The number of changes from "busy" to "free" or back describes
                 # the number of discontinuous shifts
                 # somthing like sum(abs(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]))
+                delta_vars[n].append([])
                 for lo in all_locations:
-                    for s in all_shifts[0:-run_length]:
+                    for s in all_shifts[0:-librarians[n]['prefered_length']]:
                         tmp_var1 = model.NewIntVar(-max_shift, max_shift, 'tmp1deltan%dd%dlo%ds%d' % (n, d, lo, s))
-                        model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1).OnlyEnforceIf(preferedRunLength)
+                        #model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1).OnlyEnforceIf(preferedRunLength)
                         tmp_var2 = model.NewIntVar(0, max_shift, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
                         model.AddAbsEquality(tmp_var2, tmp_var1)
-                        delta_vars[d].append(tmp_var2)
-            model.Add(sum([delta_vars[d][s] for s in all_shifts[0:-run_length]])*run_length <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
+                        delta_vars[n][d].append(tmp_var2)
+            model.Add(sum([delta_vars[n][d][s] for s in all_shifts[0:-librarians[n]['prefered_length']]])*librarians[n]['prefered_length'] <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
                 for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
             n_conditions += 1
 
