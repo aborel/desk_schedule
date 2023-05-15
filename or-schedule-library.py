@@ -122,10 +122,14 @@ def main():
 
     for n in all_librarians:
         num_shifts_worked = 0
+        out_of_time_shifts = 0
         for d in all_days:
             for s in all_shifts:
                 for lo in all_locations:
                     num_shifts_worked += shifts[(n, d, s, lo)]
+                    out_of_time_shifts += shifts[(n, d, s, lo)] if shift_requests[n][d][s][lo] == 0 else 0
+
+        model.Add(out_of_time_shifts <= 1)
         model.Add(min_shifts_per_librarian <= num_shifts_worked)
         model.Add(num_shifts_worked <= quota[librarians[n]['type']][0])
 
@@ -160,7 +164,7 @@ def main():
     for n in all_librarians:
         score = sum(solver.Value(shifts[(n, d, s, lo)])
             for d in all_days for s in all_shifts for lo in all_locations)
-        print(f'{librarians[n]["name"]} is working {score} shifts')
+        print(f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]} shifts')
 
 
 
