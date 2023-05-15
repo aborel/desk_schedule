@@ -68,7 +68,7 @@ def main():
 
 
     # What is the longest desk stay that someone requested?
-    max_req_run_length = max([librarian['prefered_length'] for librarian in librarians])
+    max_req_run_length = max([librarians[librarian]['prefered_length'] for librarian in librarians])
     # Limit this to the max number of shifts per day
     max_run_length = min([max_req_run_length, max_shfts_per_day])
 
@@ -81,6 +81,7 @@ def main():
     all_locations = range(num_locations)
 
 
+    # Masks to account for multiple shift preferences
     max_shift = num_shifts-1
     masks = numpy.zeros(shape=(max_run_length, max_shift, max_shift), dtype=numpy.int8)
     for rl in range(max_run_length):
@@ -133,21 +134,23 @@ def main():
             model.Add(sum(shifts[(n, d, s, lo)]
                 for s in all_shifts for lo in all_locations) <= max_shfts_per_day)
             n_conditions += 1
-            successive_shifts = 0
-            # Successive shifts preference applicable until 17h only
-            for s in all_shifts[0:-2]:
-                #print(sum([shift_requests[n][d][s][lo] for lo in all_locations]))
-                reduced_shifts = [sum([shifts[(n, d, s, lo)]*shift_requests[n][d][s][lo]]) for lo in all_locations]
 
-            run_length = 0
-            for shift in range(len(reduced_shifts)):
-                if reduced_shifts[shift] == 1:
-                    pass
-            """
-                #model.Add(shift_group[0] == 1 and shift_group[1] == librarians[n]['prefered_length'])
+            run_length = librarians[n]['prefered_length']-1
             
-                n_conditions += 1
-            """
+            # Successive shifts preference?
+            for offset in all_shifts[0:-run_length-1]:
+                # the last shift (18h-20h) cannot be combined with another one
+                reduced_shifts = range(num_shifts-offset-1)
+                #print(reduced_shifts)
+                #print(offset, run_length, n, d)
+                #for s in reduced_shifts:
+                #    print(s, masks[run_length][s][offset])
+                #print(sum([shift_requests[n][d][s][lo] for lo in all_locations]))
+                subsequent_shifts = sum([shifts[(n, d, s, lo)]*shift_requests[n][d][s][lo]*masks[run_length][s][offset] for s in reduced_shifts for lo in all_locations])
+
+                # TODO fix  TypeError('Not supported: CpModel.Add(' + str(ct) + ')')
+                #model.Add(subsequent_shifts == 0 or subsequent_shifts == librarians[n]['prefered_length'])
+                #n_conditions += 1
 
         # only assign max. one 18-20 shift for a given librarian
         s = all_shifts[-1]
