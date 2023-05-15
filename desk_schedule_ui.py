@@ -14,7 +14,7 @@ from functools import partial
 from unicodedata import normalize
 
 from parse_absences import parse_absences
-from errors import error_file, error_file_header, init_error_log, log_message, get_stack_trace
+from errors import error_file, error_file_header, init_error_log, log__error_message, get_stack_trace
 import or_librarydesk_schedule
 
 version = "1.0"
@@ -60,7 +60,7 @@ def run_desk_schedule(tkroot, width_chars):
         # TODO call or-librarydesk-schedule, need to make it a module first
         or_librarydesk_schedule.main(horaires)
     else:
-        log_message('Vous DEVEZ sélectionner un fichier XLSX contenant les horaires!')
+        log_error_message('Vous DEVEZ sélectionner un fichier XLSX contenant les horaires!')
 
 
     f_err = open(error_file, "r")

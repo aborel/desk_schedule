@@ -3,7 +3,7 @@ import sys
 from bs4 import BeautifulSoup
 import dateparser
 
-from errors import log_message, get_stack_trace
+from errors import log_error_message, get_stack_trace
 
 
 # From https://absences2.epfl.ch/home/plannings
@@ -107,11 +107,11 @@ def parse_absences(htmlfile):
                     print(f'{librarians[ridx]} is off due to {get_all_text(event).strip()} from {known_days[start]} to {known_days[end]}')
 
     except IndexError as e:
-        log_message('no table found?')
-        log_message(get_stack_trace(e))
+        log_error_message('no table found?')
+        log_error_message(get_stack_trace(e))
     except Exception as e:
-        log_message('Something went really wrong')
-        log_message(get_stack_trace(e))
+        log_error_message('Something went really wrong')
+        log_error_message(get_stack_trace(e))
 
 
 if __name__ == "__main__":

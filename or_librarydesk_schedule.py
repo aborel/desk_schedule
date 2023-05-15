@@ -60,8 +60,6 @@ def main(parameter_file):
     # Each librarian can request to be assigned to specific shifts.
     # The optimal assignment maximizes the number of fulfilled shift requests.
 
-    
-
     if parameter_file == '':
         from work_schedule import librarians, shift_requests, meeting_slots
         from work_schedule import quota, locations, rules, weekdays, desk_shifts, msg
