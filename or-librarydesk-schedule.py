@@ -120,7 +120,7 @@ def main():
                 if s < locations[lo]['start'] or s > locations[lo]['end']:
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0)
                     n_conditions += 1
-                elif s == all_shifts[-1] and (lo > 0 or d == all_days[-1]):
+                elif s == all_shifts[-1] and (d == all_days[-1]):
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0)
                     n_conditions += 1
                 else:
@@ -194,6 +194,9 @@ def main():
                             num_shifts_worked += shifts[(n, d, s, lo)]
                     else:
                         num_shifts_reserve += shifts[(n, d, s, lo)]
+                        if s == all_shifts[-1]:
+                            # Last shift must be counted twice, as it lasts 2 hours
+                            num_shifts_reserve += shifts[(n, d, s, lo)]
                     out_of_time_shifts += shifts[(n, d, s, lo)] * (1-shift_requests[n][d][s][lo])
                     # Shifts during mandatory meetings also count as out of time
                     if d == meeting_slots[librarians[n]['sector']][0]:
@@ -205,7 +208,7 @@ def main():
 
         model.Add(out_of_time_shifts < 1)
         n_conditions += 1
-        model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - 1)
+        model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - 2)
         n_conditions += 1
         model.Add(num_shifts_reserve >= quota[librarians[n]['type']][1] - 1)
         n_conditions += 1
@@ -243,8 +246,12 @@ def main():
     print('-\nSolved? ', status, solver.StatusName())
     
     print()
+
+    report = ''
     for d in all_days:
-        print('Day', d)
+        line = f'Day {d}'
+        print(line)
+        report += '<br/>\n' + line + '<br/>\n'
         for lo in all_locations:
             for s in all_shifts:
                 for n in all_librarians:
@@ -254,14 +261,22 @@ def main():
                         if shift_requests[n][d][s][lo] == 1:
                             if not d == meeting_slots[librarians[n]['sector']][0] or s < meeting_slots[librarians[n]['sector']][1] or s > meeting_slots[librarians[n]['sector']][2]:
                                 if s < all_shifts[-1]:
-                                    print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).')
+                                    line = f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).'
+                                    print(line)
+                                    report += line + '<br>\n'
                                 else:
-                                    print(f'{librarians[n]["name"]} works 2h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).')
+                                    line = f'{librarians[n]["name"]} works 2h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).'
+                                    print(line)
+                                    report += line + '<br>\n'
                             else:
-                                print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (problem with a group meeting).')                                
+                                line = f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (problem with a group meeting).'
+                                print(line)
+                                report += line + '<br>\n'                    
                         else:
+                            line = f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (problem with work hours).'
                             # print(shift_requests[n][d])
-                            print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (problem with work hours).')
+                            print(line)
+                            report += line + '<br/>\n'
 
         for sector in sector_semester_quotas:
             score = sum([solver.Value(shifts[(n, d, s, lo)]) for n in all_librarians
@@ -285,10 +300,18 @@ def main():
                     for lo in all_locations if librarians[n]['sector'] == sector])
                 if worked_pm > 0:
                     pm_librarians += 1
-            print(f'Daily shifts for {sector.upper()}: {score} (using {unique_librarians} unique librarian(s), minimum {sector_semester_quotas[sector]}')
-            print(f'Morning (8h-13): {am_librarians} librarians, afternoon (12h-20h): {pm_librarians} librarians')
+            line = f'Daily shifts for {sector.upper()}: {score} (using {unique_librarians} unique librarian(s), minimum {sector_semester_quotas[sector]})'
+            print(line)
+            report += line + '<br/>\n'
+            line = f'Morning (8h-13): {am_librarians} librarian(s), afternoon (12h-20h): {pm_librarians} librarian(s)'
+            print(line)
+            report += line + '<br/>\n'
     print()
+    report += line + '<br/>\n'
 
+    line = 'Librarians work summary'
+    print(line)
+    report += '<br/>\n' + line + '<br/>\n'
     for n in all_librarians:
         score = sum(solver.Value(shifts[(n, d, s, lo)])
             for d in all_days for s in all_shifts for lo in all_locations if lo < 3)
@@ -298,7 +321,9 @@ def main():
             for d in all_days for s in all_shifts for lo in all_locations if lo >= 3)
         s1 = f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]}'
         s2 = f' and acting as a reserve for {score_reserve}/{quota[librarians[n]["type"]][1]} shifts'
-        print(s1 + s2)
+        line = s1 + s2
+        print(line)
+        report += line + '<br/>\n'
 
     # Prepare HTML output
 
@@ -357,7 +382,7 @@ body {
     for s in all_shifts:
         for lo in all_locations:
             table += "<tr>\n"
-            table += f"<td>{s+8}:00-{s+9}:00 {locations[lo]['name']}</td>"
+            table += f"<td>{(s+8):02}:00-{(s+9):02}:00 {locations[lo]['name']}</td>"
             for d in all_days:
                 cell = "<td>N/A</td>"
                 for n in all_librarians:
@@ -382,7 +407,8 @@ body {
     """
     body = f"<body>\n{title}\n{datatables_init}\n<div>{score}</div><pre><code>"
     body += f"<h2>Technical statistics:</h2>\n{stat_details}</code></pre>"
-    body += f"\n{table}</body>"
+    body += f"\n{table}"
+    body += f'\n<div>{report}</div></body>'
 
     html = f"<html>\n{header}\n{body}</html>"
 
