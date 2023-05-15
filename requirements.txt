@@ -2,4 +2,6 @@ pulp
 gdown
 pandas
 ortools
-
+docplex
+numpy
+matplotlib
