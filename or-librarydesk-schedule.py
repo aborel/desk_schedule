@@ -48,6 +48,7 @@ sector_holiday_quotas = {
 
 
 # TODO: replace with values extracted from the Excel spreadsheet
+"""
 locations = {
     0: 'Accueil 1',
     1: 'Accueil 2',
@@ -55,6 +56,7 @@ locations = {
     3: 'Remplacement accueil',
     4: 'Remplacement STM'
 }
+"""
 
 weekdays = {0: 'Monday',
     1: 'Tuesday',
@@ -70,10 +72,10 @@ def main():
     # The optimal assignment maximizes the number of fulfilled shift requests.
     num_shifts = 11
     num_days = 5
-    
-    num_locations = len(locations.keys())
 
-    from work_schedule import librarians, shift_requests, meeting_slots, quota
+    from work_schedule import librarians, shift_requests, meeting_slots, quota, locations
+
+    num_locations = len(locations.keys())
     num_librarians = len(librarians.keys())
 
     all_librarians = range(num_librarians)
@@ -96,13 +98,12 @@ def main():
                 for lo in all_locations:
                     shifts[(n, d, s, lo)] = \
                         model.NewBoolVar('shift_n%id%is%ilo%i' % (n, d, s, lo))
-    #print(shifts)
 
     # Each shift at each location is assigned to exactly 1 librarian
     for d in all_days:
         for s in all_shifts:
             for lo in all_locations:
-                if (lo == 2 or lo == 4) and s < 2:
+                if s < locations[lo]['start'] or s > locations[lo]['end']:
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0)
                     n_conditions += 1
                 elif s == all_shifts[-1] and (lo > 0 or d == all_days[-1]):
@@ -140,9 +141,7 @@ def main():
         for d in all_days:
             for s in all_shifts:
                 for lo in all_locations:
-                    # TODO: skip STM and STM reserve shifts until 10AM (i.e. shift 2)
-                    # This doesn't seem to work, librarians are still assigned there.
-                    if lo < 3:
+                    if locations[lo]['name'].lower().find('remplacement') < 0:
                         num_shifts_worked += shifts[(n, d, s, lo)]
                         if s == all_shifts[-1]:
                             # Last shift must be counted twice, as it lasts 2 hours
@@ -211,14 +210,14 @@ def main():
                         if shift_requests[n][d][s][lo] == 1:
                             if not d == meeting_slots[librarians[n]['sector']][0] or s < meeting_slots[librarians[n]['sector']][1] or s > meeting_slots[librarians[n]['sector']][2]:
                                 if s < all_shifts[-1]:
-                                    print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
+                                    print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).')
                                 else:
-                                    print(f'{librarians[n]["name"]} works 2h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
+                                    print(f'{librarians[n]["name"]} works 2h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).')
                             else:
-                                print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (problem with a group meeting).')                                
+                                print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (problem with a group meeting).')                                
                         else:
                             # print(shift_requests[n][d])
-                            print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (problem with work hours).')
+                            print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (problem with work hours).')
 
         for sector in sector_semester_quotas:
             score = sum([solver.Value(shifts[(n, d, s, lo)]) for n in all_librarians
@@ -297,7 +296,7 @@ body {
     for s in all_shifts:
         for lo in all_locations:
             table += "<tr>\n"
-            table += f"<td>{s+8}:00-{s+9}:00 {locations[lo]}</td>"
+            table += f"<td>{s+8}:00-{s+9}:00 {locations[lo]['name']}</td>"
             for d in all_days:
                 cell = "<td>N/A</td>"
                 for n in all_librarians:
