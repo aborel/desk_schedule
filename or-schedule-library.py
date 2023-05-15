@@ -43,6 +43,12 @@ sector_holiday_quotas = {
     'spi': 1
 }
 
+locations = {
+    0: 'Accueil 1',
+    1: 'Accueil 2',
+    2: 'STM'
+}
+
 def main():
     # This program tries to find an optimal assignment of librarians to shifts
     # (10 shifts per day, for 5 days), subject to some constraints (see below).
@@ -131,16 +137,16 @@ def main():
     
     for d in all_days:
         print('Day', d)
-        for n in all_librarians:
+        for lo in all_locations:
             for s in all_shifts:
-                for lo in all_locations:
+                for n in all_librarians:
                     #print(n, d, s, lo)
                     #print(shifts[(n, d, s, lo)])
                     if solver.Value(shifts[(n, d, s, lo)]) == 1:
                         if shift_requests[n][d][s][lo] == 1:
-                            print(f'librarian {n} works shift {s} at location {lo} (requested).')
+                            print(f'librarian {n} works shift {s} at location {locations[lo]} (requested).')
                         else:
-                            print(f'librarian {n} works shift {s} at location {lo} (unrequested).')
+                            print(f'librarian {n} works shift {s} at location {locations[lo]} (unrequested).')
         print()
 
     # Statistics.
