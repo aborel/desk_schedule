@@ -188,7 +188,7 @@ def main():
         model.Proto().assumptions.append(maxOneShiftPerDay.Index())
 
     if rules['minOneShiftAverage']:
-        min_average_shifts = 6
+        min_average_shifts = num_days // 5
         # Each librarian works at at least min_average_shifts=1 shifts per week/over the period.
         minOneShiftAverage = model.NewBoolVar('minOneShifAtverage')
         for n in all_librarians:
