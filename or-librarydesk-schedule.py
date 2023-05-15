@@ -141,6 +141,8 @@ def main():
             for offset in all_shifts[0:-run_length-1]:
                 # the last shift (18h-20h) cannot be combined with another one
                 reduced_shifts = range(num_shifts-offset-1)
+                print([masks[run_length][s][offset] for s in reduced_shifts])
+                print('one down')
                 #print(reduced_shifts)
                 #print(offset, run_length, n, d)
                 #for s in reduced_shifts:
@@ -151,7 +153,8 @@ def main():
 
                 # TODO fix  TypeError('Not supported: CpModel.Add(' + str(ct) + ')') DONE?
                 # TODO study more relaxed requirements, INFEASIBLE with current data and code
-                model.Add(subsequent_shifts == 0 or subsequent_shifts == librarians[n]['prefered_length'])
+                # model.Add(subsequent_shifts == 0 or subsequent_shifts == librarians[n]['prefered_length'])
+                #model.Add(subsequent_shifts == 0 or subsequent_shifts == librarians[n]['prefered_length'])
                 #n_conditions += 1
 
         # only assign max. one 18-20 shift for a given librarian
@@ -261,12 +264,23 @@ def main():
                         for lo in all_locations if librarians[n]['sector'] == sector])
             
             unique_librarians = 0
+            am_librarians = 0
+            pm_librarians = 0
             for n in all_librarians:
                 worked_today = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts
                     for lo in all_locations if librarians[n]['sector'] == sector])
                 if worked_today > 0:
                     unique_librarians += 1
+                worked_am = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts[0:6]
+                    for lo in all_locations if librarians[n]['sector'] == sector])
+                if worked_am > 0:
+                    am_librarians += 1
+                worked_pm = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts[6:-1]
+                    for lo in all_locations if librarians[n]['sector'] == sector])
+                if worked_pm > 0:
+                    pm_librarians += 1
             print(f'Daily shifts for {sector.upper()}: {score} (using {unique_librarians} unique librarian(s), minimum {sector_semester_quotas[sector]}')
+            print(f'Morning (8h-13): {am_librarians} librarians, afternoon (12h-20h): {pm_librarians} librarians')
     print()
 
     for n in all_librarians:
