@@ -116,93 +116,96 @@ def main():
                     shifts[(n, d, s, lo)] = \
                         model.NewBoolVar('shift_n%id%is%ilo%i' % (n, d, s, lo))
 
-    oneLibrariaPerShift = model.NewBoolVar('oneLibrariaPerShift')
-    # Each shift at each location is assigned to exactly 1 librarian
-    for d in all_days:
-        for s in all_shifts:
-            for lo in all_locations:
-                if s < locations[lo]['start'] or s > locations[lo]['end']:
-                    model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 0).OnlyEnforceIf(oneLibrariaPerShift)
-                    n_conditions += 1
-                elif s == all_shifts[-1] and (d == all_days[-1]):
-                    model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 0).OnlyEnforceIf(oneLibrariaPerShift)
-                    n_conditions += 1
-                else:
-                    model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 1).OnlyEnforceIf(oneLibrariaPerShift)
-                    n_conditions += 1 
-    
-    model.Proto().assumptions.append(oneLibrariaPerShift.Index())
-
-    # WIP : each librarian is using at most 1 seat at a time!
-    oneShiftAtATime = model.NewBoolVar('oneShiftAtATime')
-    for d in all_days:
-        for s in all_shifts:
-            for n in all_librarians:
-                model.Add(sum([shifts[(n, d, s, lo)] for lo in all_locations]) <= 1).OnlyEnforceIf(oneShiftAtATime)
-                n_conditions += 1 
-    model.Proto().assumptions.append(oneShiftAtATime.Index())
-
-    # Each librarian works at most max_shifts_per_day=2 shift per day.
-    # TODO: make that 2 SUCCESSIVE shifts if requested
-    # TODO: mix Accueil and STM shifts over the week?
-    preferedRunLength = model.NewBoolVar('preferedRunLength')
-    for n in all_librarians:
-        delta_vars = []
+    if rules['oneLibrariaPerShift']:
+        oneLibrariaPerShift = model.NewBoolVar('oneLibrariaPerShift')
+        # Each shift at each location is assigned to exactly 1 librarian
         for d in all_days:
-            model.Add(sum([shifts[(n, d, s, lo)]
-                for s in all_shifts for lo in all_locations]) +
-            sum([shifts[(n, d, s, lo)]
-                for s in all_shifts[-1:] for lo in all_locations]) <= max_shifts_per_day)
+            for s in all_shifts:
+                for lo in all_locations:
+                    if s < locations[lo]['start'] or s > locations[lo]['end']:
+                        model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 0).OnlyEnforceIf(oneLibrariaPerShift)
+                        n_conditions += 1
+                    elif s == all_shifts[-1] and (d == all_days[-1]):
+                        model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 0).OnlyEnforceIf(oneLibrariaPerShift)
+                        n_conditions += 1
+                    else:
+                        model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 1).OnlyEnforceIf(oneLibrariaPerShift)
+                        n_conditions += 1 
+        model.Proto().assumptions.append(oneLibrariaPerShift.Index())
+
+    if rules['oneShiftAtATime']:
+        # WIP : each librarian is using at most 1 seat at a time!
+        oneShiftAtATime = model.NewBoolVar('oneShiftAtATime')
+        for d in all_days:
+            for s in all_shifts:
+                for n in all_librarians:
+                    model.Add(sum([shifts[(n, d, s, lo)] for lo in all_locations]) <= 1).OnlyEnforceIf(oneShiftAtATime)
+                    n_conditions += 1 
+        model.Proto().assumptions.append(oneShiftAtATime.Index())
+
+    if rules['preferedRunLength']:
+        # Each librarian works at most max_shifts_per_day=2 shift per day.
+        # TODO: make that 2 SUCCESSIVE shifts if requested
+        # TODO: mix Accueil and STM shifts over the week?
+        preferedRunLength = model.NewBoolVar('preferedRunLength')
+        for n in all_librarians:
+            delta_vars = []
+            for d in all_days:
+                model.Add(sum([shifts[(n, d, s, lo)]
+                    for s in all_shifts for lo in all_locations]) +
+                sum([shifts[(n, d, s, lo)]
+                    for s in all_shifts[-1:] for lo in all_locations]) <= max_shifts_per_day)
+                n_conditions += 1
+
+                run_length = librarians[n]['prefered_length']
+                
+                # Successive shifts preference?
+                # The number of changes from "busy" to "free" or back describes
+                # the number of discontinuous shifts
+                # somthing like sum(abs(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]))
+                for lo in all_locations:
+                    for s in all_shifts[0:-run_length]:
+                        tmp_var1 = model.NewIntVar(-max_shift, max_shift, 'tmp1deltan%dd%dlo%ds%d' % (n, d, lo, s))
+                        model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1).OnlyEnforceIf(preferedRunLength)
+                        tmp_var2 = model.NewIntVar(0, max_shift, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
+                        model.AddAbsEquality(tmp_var2, tmp_var1)
+                        delta_vars.append(tmp_var2)
+            model.Add(sum([delta_vars[s] for s in all_shifts[0:-run_length-1]])*run_length <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
+                for d in all_days for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
             n_conditions += 1
 
-            run_length = librarians[n]['prefered_length']
-            
-            # Successive shifts preference?
-            # The number of changes from "busy" to "free" or back describes
-            # the number of discontinuous shifts
-            # somthing like sum(abs(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]))
-            for lo in all_locations:
-                for s in all_shifts[0:-run_length]:
-                    tmp_var1 = model.NewIntVar(-max_shift, max_shift, 'tmp1deltan%dd%dlo%ds%d' % (n, d, lo, s))
-                    model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1).OnlyEnforceIf(preferedRunLength)
-                    tmp_var2 = model.NewIntVar(0, max_shift, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
-                    model.AddAbsEquality(tmp_var2, tmp_var1)
-                    delta_vars.append(tmp_var2)
-        model.Add(sum([delta_vars[s] for s in all_shifts[0:-run_length-1]])*run_length <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
-            for d in all_days for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
-        n_conditions += 1
+        model.Proto().assumptions.append(preferedRunLength.Index())
 
-
+    if rules['maxOneLateShift']:
         # only assign max. one 18-20 shift for a given librarian
         maxOneLateShift = model.NewBoolVar('maxOneLateShift')
         s = all_shifts[-1]
         model.Add(sum([shifts[(n, d, s, lo)]
             for d in all_days for lo in all_locations]) <= 1).OnlyEnforceIf(maxOneLateShift)
         n_conditions += 1
+        model.Proto().assumptions.append(maxOneLateShift.Index())
 
+    if rules['noSeventeenToTwenty']:
         # prevent 17-18 + 18-20 sequence for any librarian
         noSeventeenToTwenty = model.NewBoolVar('noSeventeenToTwenty')
         for d in all_days:
             model.Add(sum([shifts[(n, d, s, lo)]
                 for s in all_shifts[-2:] for lo in all_locations]) <= 1).OnlyEnforceIf(noSeventeenToTwenty)
             n_conditions += 1
+        model.Proto().assumptions.append(noSeventeenToTwenty.Index())
 
-
+    if rules['noTwelveToFourteen']:
         # prevent 12-13 + 13-14 sequence for any librarian
         noTwelveToFourteen = model.NewBoolVar('noTwelveToFourteen')
         for d in all_days:
             model.Add(sum([shifts[(n, d, s, lo)]
                 for s in [12-8, 13-8] for lo in all_locations]) <= 1).OnlyEnforceIf(noTwelveToFourteen)
             n_conditions += 1
-
-    model.Proto().assumptions.append(preferedRunLength.Index())
-    model.Proto().assumptions.append(maxOneLateShift.Index())
-    model.Proto().assumptions.append(noSeventeenToTwenty.Index())
+        model.Proto().assumptions.append(noTwelveToFourteen.Index())
 
 
     # Try to distribute the shifts evenly, so that each librarian works
     # his quota of shifts (or quota - 1) on the active or reserve locations
-
 
     noOutOfTimeShift = model.NewBoolVar('noOutOfTimeShift')
     minActiveShifts = model.NewBoolVar('minActiveShifts')
@@ -236,18 +239,22 @@ def main():
                         if s >= meeting_slots['dir'][1] and s <= meeting_slots['dir'][2]:
                             out_of_time_shifts += shifts[(n, d, s, lo)] * 1
 
+        if rules['noOutOfTimeShift']:        
+            model.Add(out_of_time_shifts < 1).OnlyEnforceIf(noOutOfTimeShift)
+            n_conditions += 1
+        if rules['minActiveShifts']:      
+            model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - quota[librarians[n]['type']][0]//2 ).OnlyEnforceIf(minActiveShifts)
+            n_conditions += 1
+        if rules['minReserveShifts']: 
+            model.Add(num_shifts_reserve >= quota[librarians[n]['type']][1] - 1).OnlyEnforceIf(minReserveShifts)
+            n_conditions += 1
+        if rules['maxActiveShifts']: 
+            model.Add(num_shifts_worked <= quota[librarians[n]['type']][0]).OnlyEnforceIf(maxActiveShifts)
+            n_conditions += 1
+        if rules['maxReserveShifts']: 
+            model.Add(num_shifts_reserve <= quota[librarians[n]['type']][1]).OnlyEnforceIf(maxReserveShifts)
+            n_conditions += 1
         
-        model.Add(out_of_time_shifts < 1).OnlyEnforceIf(noOutOfTimeShift)
-        n_conditions += 1        
-        model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - quota[librarians[n]['type']][0]//2 ).OnlyEnforceIf(minActiveShifts)
-        n_conditions += 1
-        model.Add(num_shifts_reserve >= quota[librarians[n]['type']][1] - 1).OnlyEnforceIf(minReserveShifts)
-        n_conditions += 1
-        model.Add(num_shifts_worked <= quota[librarians[n]['type']][0]).OnlyEnforceIf(maxActiveShifts)
-        n_conditions += 1
-        model.Add(num_shifts_reserve <= quota[librarians[n]['type']][1]).OnlyEnforceIf(maxReserveShifts)
-        n_conditions += 1
-    
     sector_score = len(all_days)*[{}]
 
     model.Proto().assumptions.append(noOutOfTimeShift.Index())
