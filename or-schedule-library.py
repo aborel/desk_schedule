@@ -117,7 +117,8 @@ def main():
     # number of shifts is not divisible by the number of librarians, some librarians will
     # be assigned one more shift.
     
-    min_shifts_per_librarian = (num_shifts * num_days * num_locations) // num_librarians
+    # min_shifts_per_librarian = (num_shifts * num_days * num_locations) // num_librarians
+    min_shifts_per_librarian = 1
     print('min_shifts_per_librarian: ', min_shifts_per_librarian)
     if num_shifts * num_days * num_locations % num_librarians == 0:
         max_shifts_per_librarian = min_shifts_per_librarian
@@ -131,7 +132,7 @@ def main():
                 for lo in all_locations:
                     num_shifts_worked += shifts[(n, d, s, lo)]
         model.Add(min_shifts_per_librarian <= num_shifts_worked)
-        model.Add(num_shifts_worked <= max_shifts_per_librarian)
+        model.Add(num_shifts_worked <= quota[librarians[n]['type']][0])
 
     # pylint: disable=g-complex-comprehension
     model.Maximize(
