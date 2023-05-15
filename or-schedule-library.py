@@ -119,12 +119,7 @@ def main():
     
     # min_shifts_per_librarian = (num_shifts * num_days * num_locations) // num_librarians
     min_shifts_per_librarian = 1
-    print('min_shifts_per_librarian: ', min_shifts_per_librarian)
-    if num_shifts * num_days * num_locations % num_librarians == 0:
-        max_shifts_per_librarian = min_shifts_per_librarian
-    else:
-        max_shifts_per_librarian = min_shifts_per_librarian + 1
-    print('max_shifts_per_librarian: ', max_shifts_per_librarian)
+
     for n in all_librarians:
         num_shifts_worked = 0
         for d in all_days:
@@ -142,10 +137,12 @@ def main():
     solver = cp_model.CpSolver()
     status = solver.Solve(model)
 
-    print('Solved (hopefully)?', status)
+    print('Quality of the solution: definition of constants')
     print('cp_model.FEASIBLE', cp_model.FEASIBLE)
     print('cp_model.INFEASIBLE', cp_model.INFEASIBLE)
     print('cp_model.OPTIMAL', cp_model.OPTIMAL)
+    print('-\nSolved? ', status)
+    
     
     for d in all_days:
         print('Day', d)
@@ -160,6 +157,12 @@ def main():
                         else:
                             print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (problem with work hours).')
         print()
+    for n in all_librarians:
+        score = sum(solver.Value(shifts[(n, d, s, lo)])
+            for d in all_days for s in all_shifts for lo in all_locations)
+        print(f'{librarians[n]["name"]} is working {score} shifts')
+
+
 
     # Statistics.
 
