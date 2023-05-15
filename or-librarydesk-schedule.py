@@ -176,8 +176,11 @@ def main():
             for d in all_days for s in all_shifts for lo in all_locations))
     # Creates the solver and solve.
     solver = cp_model.CpSolver()
-    status = solver.Solve(model)
+    #status = solver.Solve(model)
+    solution_printer = cp_model.ObjectiveSolutionPrinter()
+    status = solver.SolveWithSolutionCallback(model, solution_printer)
 
+    print()
     print('Quality of the solution: definition of constants')
     print('cp_model.FEASIBLE', cp_model.FEASIBLE)
     print('cp_model.INFEASIBLE', cp_model.INFEASIBLE)
