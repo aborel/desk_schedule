@@ -146,10 +146,12 @@ def main():
                 #for s in reduced_shifts:
                 #    print(s, masks[run_length][s][offset])
                 #print(sum([shift_requests[n][d][s][lo] for lo in all_locations]))
-                subsequent_shifts = sum([shifts[(n, d, s, lo)]*shift_requests[n][d][s][lo]*masks[run_length][s][offset] for s in reduced_shifts for lo in all_locations])
+                #subsequent_shifts = sum([shifts[(n, d, s, lo)]*shift_requests[n][d][s][lo]*masks[run_length][s][offset] for s in reduced_shifts for lo in all_locations])
+                subsequent_shifts = sum([shifts[(n, d, s, lo)]*masks[run_length][s][offset] for s in reduced_shifts for lo in all_locations])
 
-                # TODO fix  TypeError('Not supported: CpModel.Add(' + str(ct) + ')')
-                #model.Add(subsequent_shifts == 0 or subsequent_shifts == librarians[n]['prefered_length'])
+                # TODO fix  TypeError('Not supported: CpModel.Add(' + str(ct) + ')') DONE?
+                # TODO study more relaxed requirements, INFEASIBLE with current data and code
+                model.Add(subsequent_shifts == 0 or subsequent_shifts == librarians[n]['prefered_length'])
                 #n_conditions += 1
 
         # only assign max. one 18-20 shift for a given librarian
