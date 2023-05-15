@@ -2,6 +2,7 @@ import sys
 
 from bs4 import BeautifulSoup
 import dateparser
+import json
 
 from errors import log_message, log_error_message, get_stack_trace
 
@@ -90,6 +91,7 @@ def parse_absences(htmlfile):
                 log_message(f'One day should be {day_width} pixels')
 
         absence_rows = absence_table.find_all('tr')
+        vacation_data = {}
         for ridx, row in enumerate(absence_rows):
             cells = row.find_all('td')
             log_message(f'{len(cells)}')
@@ -101,12 +103,20 @@ def parse_absences(htmlfile):
                 events = [div for div in all_divs if 'fc-timeline-event-harness' in div.get('class')]
                 log_message(f'{len(events)} events')
                 log_message(f"{librarians[ridx]}, {len(inner_divs)}, {[(div.get('class'), get_all_text(div).strip(), div.get('style')) for div in events]}")
+                vacation_data[librarians[ridx]] = []
                 for event in events:
                     event_style_list = [x.strip() for x in event.get('style').split(';') if x.find(':') > 0]
                     styles = {k.split(':')[0].strip(): k.split(':')[1].strip() for k in event_style_list}
                     start = int(styles['left'].replace('px', '')) // day_width
                     end = abs(int(styles['right'].replace('px', ''))) // day_width - 1
-                    log_message(f'{librarians[ridx]} is off due to {get_all_text(event).strip()} from {known_days[start]} to {known_days[end]}')
+                    reason = get_all_text(event).strip()
+                    if reason in vacation:
+                        log_message(f'{librarians[ridx]} is on vacation ({reason}) from {known_days[start]} to {known_days[end]}')
+                        vacation_data[librarians[ridx]].append((known_days[start], known_days[end]))
+                    else:
+                        log_message(f'{librarians[ridx]} is off (not on vacation) due to {reason} from {known_days[start]} to {known_days[end]}')
+        with open('vacation.json', 'w') as fp:
+            json.dump(vacation_data, fp)
 
     except IndexError as e:
         log_error_message('no table found?')
