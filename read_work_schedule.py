@@ -29,20 +29,6 @@ meeting_slots = {
 def read_work_schedules(xlsx_filename):
     wb_obj = openpyxl.load_workbook(xlsx_filename)
 
-    # Get locations from 2nd sheet
-    sheet = wb_obj['guichets']
-    locations = {}
-    for row in sheet.iter_rows():
-        if len(row) > 0:
-            cells = [cell.value for cell in row]
-            print(cells)
-            if cells[0] is not None:
-                cells = [cell.value for cell in row]
-                name = cells[1]
-                start = int(cells[2].lower().split('h')[0]) - 8
-                end = int(cells[3].lower().split('h')[0]) - 8
-                locations[cells[0]] = {'name': cells[1], 'start': start, 'end': end}
-
     sheet = wb_obj['jours']
     weekdays = {}
     max_day = None
@@ -58,8 +44,37 @@ def read_work_schedules(xlsx_filename):
                     value = cells[1]
                     weekdays[number] = value
     max_day = number + 1
-
     print(weekdays)
+
+    # Get locations from 2nd sheet
+    sheet = wb_obj['guichets']
+    locations = {}
+    for row in sheet.iter_rows():
+        if len(row) > 0:
+            cells = [cell.value for cell in row]
+            print(cells)
+            if cells[0] is not None:
+                name = cells[1]
+                locations[cells[0]] = {'name': cells[1], 'times': {}}
+                day = -1
+                for x in cells[2:2+len(weekdays.keys())]:
+                    day += 1
+                    times = []
+                    if x is None or not x[0].isdigit():
+                        print(f'{x} is not a time')
+                    else:
+                        location_hours = x.split('-')
+                        for l in location_hours:
+                            hh = int(l.lower().split('h')[0])-8
+                            mm = l.lower().split('h')[1]
+                            if len(mm) > 0:
+                                mm = int(mm)
+                            else:
+                                mm = 0
+                            times.append(hh)
+                    print('times: ', times)
+                
+                    locations[cells[0]]['times'][day] = {'start': times[0], 'end': times[1]}
 
     sheet = wb_obj['quotas']
     quota = {}
@@ -75,8 +90,9 @@ def read_work_schedules(xlsx_filename):
                 quota[category] = (worked, reserve)
 
     print(locations)
-    max_location = len(locations.keys())
-    max_shift = max([locations[k]['end'] for k in locations]) - min([locations[k]['start'] for k in locations]) + 1
+    max_location = len(locations.keys())    
+    max_shift = max([locations[k]['times'][day]['end'] for d in weekdays.keys() for k in locations]) + 1
+    max_shift -= min([locations[k]['times'][day]['start'] for d in weekdays.keys() for k in locations])
     print(max_location, max_shift)
 
     sheet = wb_obj['séances']
