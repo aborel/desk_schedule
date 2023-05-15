@@ -231,7 +231,7 @@ def main():
         
         model.Add(out_of_time_shifts < 1).OnlyEnforceIf(noOutOfTimeShift)
         n_conditions += 1        
-        model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - 2).OnlyEnforceIf(minActiveShifts)
+        model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - quota[librarians[n]['type']][0]//2 ).OnlyEnforceIf(minActiveShifts)
         n_conditions += 1
         model.Add(num_shifts_reserve >= quota[librarians[n]['type']][1] - 1).OnlyEnforceIf(minReserveShifts)
         n_conditions += 1
@@ -357,6 +357,8 @@ def main():
             for d in all_days for lo in all_locations if locations[lo]['name'].lower().find('remplacement') < 0)
         score_reserve = sum(solver.Value(shifts[(n, d, s, lo)])
             for d in all_days for s in all_shifts for lo in all_locations if locations[lo]['name'].lower().find('remplacement') >= 0)
+        score_reserve += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])
+            for d in all_days for lo in all_locations if locations[lo]['name'].lower().find('remplacement') >= 0)
         s1 = f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]}'
         s2 = f' and acting as a reserve for {score_reserve}/{quota[librarians[n]["type"]][1]} shifts'
         line = s1 + s2
@@ -420,7 +422,10 @@ body {
     for s in all_shifts:
         for lo in all_locations:
             table += "<tr>\n"
-            table += f"<td>{(s+8):02}:00-{(s+9):02}:00 {locations[lo]['name']}</td>"
+            if s < all_shifts[-1]:
+                table += f"<td>{(s+8):02}:00-{(s+9):02}:00 {locations[lo]['name']}</td>"
+            else:
+                table += f"<td>{(s+8):02}:00-{(s+10):02}:00 {locations[lo]['name']}</td>"
             for d in all_days:
                 cell = "<td>N/A</td>"
                 for n in all_librarians:
