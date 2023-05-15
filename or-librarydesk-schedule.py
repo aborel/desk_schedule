@@ -68,19 +68,19 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    num_shifts = 11
-
     if args.no_file:
         from work_schedule import librarians, shift_requests, meeting_slots
-        from work_schedule import quota, locations, rules, weekdays
+        from work_schedule import quota, locations, rules, weekdays, desk_shifts
     elif args.file is not None:
         from read_work_schedule import read_work_schedules
-        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays = read_work_schedules(args.file)
+        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(args.file)
     else:
         from read_work_schedule import read_work_schedules
         filename = 'Horaires-guichets.xlsx'
-        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays = read_work_schedules(filename)
+        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(filename)
 
+    num_shifts = len(desk_shifts.keys())
+    shift_starts = [x[0] for x in desk_shifts]
     num_locations = len(locations.keys())
     num_librarians = len(librarians.keys())
     num_days = len(weekdays.keys())
@@ -90,8 +90,8 @@ def main():
     all_days = range(num_days)
     all_locations = range(num_locations)
 
-    # Maximum normal shift, the last one is special
-    max_shift = num_shifts-1
+    # Maximum normal shift, the last one was special in the old shift model
+    max_shift = num_shifts
  
     # Creates the model.
     model = cp_model.CpModel()
@@ -130,7 +130,7 @@ def main():
         model.Proto().assumptions.append(oneLibrariaPerShift.Index())
 
     if rules['oneShiftAtATime']:
-        # WIP : each librarian is using at most 1 seat at a time!
+        # Each librarian is using at most 1 seat at a time!
         oneShiftAtATime = model.NewBoolVar('oneShiftAtATime')
         for d in all_days:
             for s in all_shifts:
@@ -140,9 +140,9 @@ def main():
         model.Proto().assumptions.append(oneShiftAtATime.Index())
 
     if rules['maxTwoShiftsPerDay']:
-        # Each librarian works at most max_shifts_per_day=2 shift per day.
+        # Each librarian works at most max_shifts_per_day=2 hours per day.
         # TODO: mix Accueil and STM shifts over the week?
-        # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
+        # TESTING Should still work with non-1h shifts, but probably not applicable in that case
         maxTwoShiftsPerDay = model.NewBoolVar('maxTwoShiftsPerDay')
         for n in all_librarians:
             for d in all_days:
@@ -155,7 +155,8 @@ def main():
 
     delta_vars1 = {}
     delta_vars2 = {}
-    # TODO: probably not valid if we switch to 2h shifts, or 2.5, or 3?
+    # TODO: Perhaps not valid if we switch to 2h shifts, or 2.5, or 3?
+    # Probably not applicable in that case anyway
     for n in all_librarians:
         if librarians[n]['prefered_length'] > 1:
             for d in all_days:
@@ -185,10 +186,9 @@ def main():
 
         model.Proto().assumptions.append(preferedRunLength.Index())
         
-
     if rules['maxOneLateShift']:
         # only assign max. one 18-20 shift for a given librarian
-        # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
+        # TESTING: should valid if we switch to 2h shifts, or 2.5, or 3?
         maxOneLateShift = model.NewBoolVar('maxOneLateShift')
         s = all_shifts[-1]
         for n in all_librarians:
@@ -199,6 +199,7 @@ def main():
 
     if rules['noSeventeenToTwenty']:
         # prevent 17-18 + 18-20 sequence for any librarian
+        # TESTING should still be working using non-1h shifts
         noSeventeenToTwenty = model.NewBoolVar('noSeventeenToTwenty')
         for n in all_librarians:
             for d in all_days:
@@ -208,13 +209,16 @@ def main():
         model.Proto().assumptions.append(noSeventeenToTwenty.Index())
 
     if rules['noTwelveToFourteen']:
-        # TODO: probably valid if we switch to 2h shifts, or 2.5, or 3?
+        # TESTING: should work with non-1h slots, just inoperative for 2h slots
         # prevent 12-13 + 13-14 sequence for any librarian
         noTwelveToFourteen = model.NewBoolVar('noTwelveToFourteen')
+        critical_zone_minutes = [max([x for x in shift_starts if x <= 12*60]),
+            min([x for x in shift_starts if x >= 14*60])]
+        critical_zone_slots = [shift_starts.index(c) for c in critical_zone_minutes]
         for n in all_librarians:
             for d in all_days:
                 model.Add(sum([shifts[(n, d, s, lo)]
-                    for s in [12-8, 13-8] for lo in all_locations]) <= 1).OnlyEnforceIf(noTwelveToFourteen)
+                    for s in critical_zone_slots for lo in all_locations]) <= 1).OnlyEnforceIf(noTwelveToFourteen)
                 n_conditions += 1
         model.Proto().assumptions.append(noTwelveToFourteen.Index())
 
@@ -244,23 +248,29 @@ def main():
     maxReserveShifts = model.NewBoolVar('maxReserveShifts')
     # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
     for n in all_librarians:
-        num_shifts_worked = 0
-        num_shifts_reserve = 0
+        num_hours_worked = 0
+        num_hours_reserve = 0
         out_of_time_shifts = 0
         for d in all_days:
             # run_length = 0
             for s in all_shifts:
                 for lo in all_locations:
                     if locations[lo]['name'].lower().find('remplacement') < 0:
-                        num_shifts_worked += shifts[(n, d, s, lo)]
+                        num_hours_worked += shifts[(n, d, s, lo)]*desk_shifts[s][1]
+                        # TESTING no longer necessary exception?
+                        """
                         if s == all_shifts[-1]:
                             # Last shift must be counted twice, as it lasts 2 hours
                             num_shifts_worked += shifts[(n, d, s, lo)]
+                        """
                     else:
-                        num_shifts_reserve += shifts[(n, d, s, lo)]
+                        num_hours_reserve += shifts[(n, d, s, lo)]*desk_shifts[s][1]
+                        # TESTING no longer necessary exception?
+                        """
                         if s == all_shifts[-1]:
                             # Last shift must be counted twice, as it lasts 2 hours
                             num_shifts_reserve += shifts[(n, d, s, lo)]
+                        """
                     out_of_time_shifts += shifts[(n, d, s, lo)] * (1-shift_requests[n][d][s][lo])
                     # Shifts during mandatory meetings also count as out of time
                     if d == meeting_slots[librarians[n]['sector']][0]:
@@ -274,16 +284,16 @@ def main():
             model.Add(out_of_time_shifts < 1).OnlyEnforceIf(noOutOfTimeShift)
             n_conditions += 1
         if rules['minActiveShifts']:      
-            model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - quota[librarians[n]['type']][0]//2 ).OnlyEnforceIf(minActiveShifts)
+            model.Add(num_hours_worked >= quota[librarians[n]['type']][0] - quota[librarians[n]['type']][0]//2 ).OnlyEnforceIf(minActiveShifts)
             n_conditions += 1
         if rules['minReserveShifts']: 
-            model.Add(num_shifts_reserve >= quota[librarians[n]['type']][1] - 1).OnlyEnforceIf(minReserveShifts)
+            model.Add(num_hours_reserve >= quota[librarians[n]['type']][1] - 1).OnlyEnforceIf(minReserveShifts)
             n_conditions += 1
         if rules['maxActiveShifts']: 
-            model.Add(num_shifts_worked <= quota[librarians[n]['type']][0]).OnlyEnforceIf(maxActiveShifts)
+            model.Add(num_hours_worked <= quota[librarians[n]['type']][0]).OnlyEnforceIf(maxActiveShifts)
             n_conditions += 1
         if rules['maxReserveShifts']: 
-            model.Add(num_shifts_reserve <= quota[librarians[n]['type']][1]).OnlyEnforceIf(maxReserveShifts)
+            model.Add(num_hours_reserve <= quota[librarians[n]['type']][1]).OnlyEnforceIf(maxReserveShifts)
             n_conditions += 1
         
     sector_score = len(all_days)*[{}]
@@ -294,10 +304,10 @@ def main():
     model.Proto().assumptions.append(maxActiveShifts.Index())
     model.Proto().assumptions.append(maxReserveShifts.Index())
     
-    # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
+    # TESTING: is this valid if we switch to 2h shifts, or 2.5, or 3?
     for d in all_days:
         for sector in sector_semester_quotas:
-            sector_score[d][sector] = sum([shifts[(n, d, s, lo)] for n in all_librarians
+            sector_score[d][sector] = sum([shifts[(n, d, s, lo)]*desk_shifts[s][1] for n in all_librarians
                 for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
 
             #model.Add(sector_score[d][sector] <= sector_semester_quotas[sector])
