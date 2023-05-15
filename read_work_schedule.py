@@ -177,7 +177,22 @@ def read_work_schedules(xlsx_filename):
                         value = 0
                     rules[name] = (value > 0)
 
-    return availability, librarians, locations, quota, meeting_slots, rules
+
+    sheet = wb_obj['jours']
+    weekdays = {}
+    for row in sheet.iter_rows():
+        if len(row) > 0:
+            if row[0] is not None:
+                cells = [cell.value for cell in row]
+                if cells[0] is not None:
+                    try:
+                        number = int(cells[0])
+                    except ValueError:
+                        pass
+                    value = cells[1]
+                    weekdays[number] = value
+
+    return availability, librarians, locations, quota, meeting_slots, rules, weekdays
 
 
 if __name__ == '__main__':
@@ -186,7 +201,7 @@ if __name__ == '__main__':
         print('Le fichier XLSX doit contenir les horaires étendus des collaborateurs')
         exit(1)
     else:
-        availabilities, librarians, locations, quota, meeting_slots, rules = read_work_schedules(sys.argv[1])
+        availabilities, librarians, locations, quota, meeting_slots, rules, weekdays = read_work_schedules(sys.argv[1])
         outfile = open('work_schedule.py', 'w')
         outfile.write('from numpy import array, int8\n\n')
         outfile.write(f'librarians = {str(librarians)}\n')
@@ -195,3 +210,4 @@ if __name__ == '__main__':
         outfile.write(f'\nlocations = {str(locations)}\n')
         outfile.write(f'\nquota = {str(quota)}\n')
         outfile.write(f'\nrules = {str(rules)}\n')
+        outfile.write(f'\nweekdays = {str(weekdays)}\n')
