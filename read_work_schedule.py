@@ -8,23 +8,22 @@ def read_work_schedules(xlsx_filename):
     wb_obj = openpyxl.load_workbook(xlsx_filename)
     sheet = wb_obj.active
     n = 0
-    s = 0
-    d = 0
-    lo = 0
     availability = []
     librarians = {}
-    empty_roster = numpy.zeros(shape=(5, 10, 3), dtype=numpy.int8)
     for row in sheet.iter_rows():
         if len(row) > 0:
             if row[0] is not None:
                 cells = [cell.value for cell in row]
                 if cells[0] is not None:
-                    availability.append(empty_roster)
                     name = ' '.join((cells[1], cells[0]))
                     print(name)
                     librarians[n] = name
+                    new_roster = numpy.zeros(shape=(5, 10, 3), dtype=numpy.int8)
+                    d = -1
                     # Extract extended work hours
                     for x in cells[2:7]:
+                        # new day
+                        d += 1
                         if x is None or not x[0].isdigit():
                             print(f'{x} is not a time')
                         else:
@@ -56,8 +55,18 @@ def read_work_schedules(xlsx_filename):
                                     int_boundaries.append(hour-8)
                                     k += 1
                                 print(int_boundaries)
-
-                    
+                                for slot in range(len(int_boundaries) // 2):
+                                    k = int_boundaries[slot]
+                                    while k <= int_boundaries[slot+1]:
+                                        # artificial cut-off at 18h00, 18-20h to be handled later
+                                        print(d, k)
+                                        if k < 10:
+                                            new_roster[d][k][0] = 1
+                                            new_roster[d][k][1] = 1
+                                            new_roster[d][k][2] = 1
+                                        k += 1
+            
+                    print(new_roster)
         else:
             break
     print()
