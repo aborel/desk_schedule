@@ -50,11 +50,11 @@ sector_holiday_quotas = {
     'spi': 1
 }
 
-weekdays = {0: 'Monday',
-            1: 'Tuesday',
-            2: 'Wednsday',
-            3: 'Thursday',
-            4: 'Friday'
+weekdays = {0: 'lundi',
+            1: 'mardi',
+            2: 'mercredi',
+            3: 'jeudi',
+            4: 'vendredi'
             }
 
 
@@ -390,7 +390,7 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-#schedule {  
+#schedule, #guichetbiblio {  
   border collapse: collapse;
   width: 100%;
 }
@@ -400,15 +400,30 @@ body {
   padding: 8px;
 }
 
+#guichetbiblio td, #guichetbiblio th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
 #schedule tr:nth-child(even){background-color: #f2f2f2;}
+#guichetbiblio tr:nth-child(even){background-color: #f2f2f2;}
 
 #schedule tr:hover {background-color: #ddd;}
+#guichetbiblio tr:hover {background-color: #ddd;}
 
 #schedule th {
   padding-top: 12px;
   padding-bottom: 12px;
   text-align: left;
   background-color: #04AA6D;
+  color: white;
+}
+
+#guichetbiblio th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #0000FF;
   color: white;
 }
 </style></head>"""
@@ -418,6 +433,35 @@ body {
     score = f"Solution score = {solver.ObjectiveValue()} (max possible result {n_conditions})"
     stat_details = f'{solver.ResponseStats()}'
 
+
+    guichetbiblio_table = '<div><table id="guichetbiblio" class="table">\n'
+    guichetbiblio_table += '<thead>'
+    guichetbiblio_table += "<tr>\n"
+    guichetbiblio_table += '<th scope="col">Poste</th>'
+    for s in all_shifts:
+        if s < all_shifts[-1]:
+            guichetbiblio_table += f'<th scope="col">{(s+8):02}:00-{(s+9):02}:00</th>'
+        else:
+            guichetbiblio_table += f'<th scope="col">{(s+8):02}:00-{(s+10):02}:00</th>'
+    guichetbiblio_table += "\n</tr>\n</thead>\n<tbody>"
+    for d in all_days:
+        for lo in all_locations:
+            guichetbiblio_table += "<tr>\n"
+            guichetbiblio_table += f"<td>{weekdays[d]} {locations[lo]['name']}</td>"
+            for s in all_shifts:
+                cell = "<td>N/A</td>"
+                for n in all_librarians:
+                    if solver.Value(shifts[(n, d, s, lo)]) == 1:
+                        cell = f"<td>{librarians[n]['name']}</td>"
+                guichetbiblio_table += cell
+            guichetbiblio_table += "</tr>\n"
+        guichetbiblio_table += "<tr>"
+        for s in all_shifts:
+            guichetbiblio_table += '<td></td>'
+        guichetbiblio_table += "</tr>\n"
+
+    guichetbiblio_table +=  "</tbody></table></div>"
+
     table = '<div><table id="schedule" class="table">\n'
     table += '<thead>'
     table += "<tr>\n"
@@ -425,6 +469,7 @@ body {
     for d in all_days:
         table += f'<th scope="col">{weekdays[d]}</th>'
 
+    
     table += "\n</tr>\n</thead>\n<tbody>"
 
     for s in all_shifts:
@@ -458,6 +503,9 @@ body {
     """
     body = f"<body>\n{title}\n{datatables_init}\n<div>{score}</div><pre><code>"
     body += f"<h2>Technical statistics:</h2>\n{stat_details}</code></pre>"
+    body += f"\n<h2>Summary table (for guichetbiblio.epfl.ch)</h2>"
+    body += f"\n{guichetbiblio_table}"
+    body += f"\n<h2>Summary table (for other use cases)</h2>"
     body += f"\n{table}"
     body += f'\n<div>{report}</div></body>'
 
