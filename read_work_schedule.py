@@ -66,11 +66,12 @@ def read_work_schedules(xlsx_filename):
                         parsed_cell = cells[1].replace('h', ':').split(':')
                         value = int(parsed_cell[0]) * 60
                         try:
-                            time += int(parsed_cell[1])
+                            value += int(parsed_cell[1])
                         except (IndexError, ValueError) as e:
                             pass
                     except ValueError:
                         value = 0
+                    # print(cells, time, value)
                     shifts.append((time, value))
     print('shifts: ', shifts)
     max_shift = len(shifts)
@@ -102,7 +103,7 @@ def read_work_schedules(xlsx_filename):
                             else:
                                 mm = 0
                             times.append(hh)
-                        # print(times, shifts, [x[0] for x in shifts if x[0] <= times[0]])
+                        print(times, shifts, [x[0] for x in shifts if x[0] <= times[0]])
                         absolute_times = (max([x[0] for x in shifts if x[0] <= times[0]]),
                             min([x[0] for x in shifts if x[0] + x[1] >= times[1]]))
                     print('times: ', absolute_times)
