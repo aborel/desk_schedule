@@ -72,6 +72,7 @@ def parse_absences(htmlfile):
         fcDayThs = [th for th in S.find_all('th', class_='fc-day') if th.get('colspan') == '1']
         for th in fcDayThs:
             print([th.get('colspan')], get_all_text(th), th.get('data-date'))
+        known_days = [th.get('data-date') for th in fcDayThs]
         fcDayTds = S.find_all('td', class_='fc-day')
         print(f'Found {len(fcDayTds)} days')
         fcDayTds = S.find_all('td', class_='fc-day')
@@ -107,7 +108,7 @@ def parse_absences(htmlfile):
                     styles = {k.split(':')[0].strip(): k.split(':')[1].strip() for k in event_style_list}
                     start = int(styles['left'].replace('px', '')) // day_width
                     end = abs(int(styles['right'].replace('px', ''))) // day_width -1
-                    print(librarians[ridx], get_all_text(event).strip(), 'from day', start, 'to day', end)
+                    print(f'{librarians[ridx]} is off due to {get_all_text(event).strip()} from {known_days[start]} to {known_days[end]}')
 
     except IndexError as e:
         print('no table found?', e)
