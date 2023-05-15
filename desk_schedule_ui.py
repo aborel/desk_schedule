@@ -13,17 +13,13 @@ from tkinter import Tk, Button, Label, font, StringVar, Checkbutton
 from functools import partial
 from unicodedata import normalize
 
-version = "1.0"
+from parse_absences import parse_absences
+from errors import error_file, error_file_header, init_error_log, log_message
 
-error_file = "desk_schedule_errors.txt"
+version = "1.0"
 
 horaires = None
 absences = None
-
-def log_message(message):
-    f_err = open(error_file, "a")
-    f_err.write(message + '\n')
-    f_err.close()
 
 
 def get_horaire_file():
@@ -53,17 +49,9 @@ def run_desk_schedule(tkroot, width_chars):
     print(absences)    
 
     error_message = f"There were errors or warnings during processing:\ncheck {error_file} for information."
-    error_file_header = "This is the desk_schedule log for errors and warnings. Do not archive.\n"
 
-    # delete existing logfile unless it doesn't exist
-    try:
-        os.remove(error_file)
-    except OSError:
-        pass
-
-    f_err = open(error_file, "w")
-    f_err.write(error_file_header)
-    f_err.close()
+    init_error_log()
+    
 
     if absences is not None:
         # TODO call parse_absences
