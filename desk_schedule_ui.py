@@ -14,7 +14,7 @@ from functools import partial
 from unicodedata import normalize
 
 from parse_absences import parse_absences
-from errors import error_file, error_file_header, init_error_log, log_message
+from errors import error_file, error_file_header, init_error_log, log_message, get_stack_trace
 
 version = "1.0"
 

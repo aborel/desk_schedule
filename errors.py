@@ -1,4 +1,6 @@
 import os
+import sys
+import traceback
 
 error_file = "desk_schedule_errors.txt"
 error_file_header = "This is the desk_schedule log for errors and warnings. Do not archive.\n"
@@ -20,4 +22,10 @@ def init_error_log():
     f_err = open(error_file, "w")
     f_err.write(error_file_header)
     f_err.close()
+
+
+def get_stack_trace(e):
+    T, V, TB = sys.exc_info()
+    trace = ''.join(traceback.format_exception(T, V, TB))
+    return trace
 
