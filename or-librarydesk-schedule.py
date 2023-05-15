@@ -188,27 +188,30 @@ def main():
         # only assign max. one 18-20 shift for a given librarian
         maxOneLateShift = model.NewBoolVar('maxOneLateShift')
         s = all_shifts[-1]
-        model.Add(sum([shifts[(n, d, s, lo)]
-            for d in all_days for lo in all_locations]) <= 1).OnlyEnforceIf(maxOneLateShift)
-        n_conditions += 1
+        for n in all_librarians:
+            model.Add(sum([shifts[(n, d, s, lo)]
+                for d in all_days for lo in all_locations]) <= 1).OnlyEnforceIf(maxOneLateShift)
+            n_conditions += 1
         model.Proto().assumptions.append(maxOneLateShift.Index())
 
     if rules['noSeventeenToTwenty']:
         # prevent 17-18 + 18-20 sequence for any librarian
         noSeventeenToTwenty = model.NewBoolVar('noSeventeenToTwenty')
-        for d in all_days:
-            model.Add(sum([shifts[(n, d, s, lo)]
-                for s in all_shifts[-2:] for lo in all_locations]) <= 1).OnlyEnforceIf(noSeventeenToTwenty)
-            n_conditions += 1
+        for n in all_librarians:
+            for d in all_days:
+                model.Add(sum([shifts[(n, d, s, lo)]
+                    for s in all_shifts[-2:] for lo in all_locations]) <= 1).OnlyEnforceIf(noSeventeenToTwenty)
+                n_conditions += 1
         model.Proto().assumptions.append(noSeventeenToTwenty.Index())
 
     if rules['noTwelveToFourteen']:
         # prevent 12-13 + 13-14 sequence for any librarian
         noTwelveToFourteen = model.NewBoolVar('noTwelveToFourteen')
-        for d in all_days:
-            model.Add(sum([shifts[(n, d, s, lo)]
-                for s in [12-8, 13-8] for lo in all_locations]) <= 1).OnlyEnforceIf(noTwelveToFourteen)
-            n_conditions += 1
+        for n in all_librarians:
+            for d in all_days:
+                model.Add(sum([shifts[(n, d, s, lo)]
+                    for s in [12-8, 13-8] for lo in all_locations]) <= 1).OnlyEnforceIf(noTwelveToFourteen)
+                n_conditions += 1
         model.Proto().assumptions.append(noTwelveToFourteen.Index())
 
 
