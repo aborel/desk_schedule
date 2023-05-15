@@ -130,6 +130,18 @@ def main(parameter_file):
                     shifts[(n, d, s, lo)] = \
                         model.NewBoolVar('shift_n%id%is%ilo%i' % (n, d, s, lo))
 
+    if rules['UseAbsences']:
+        vacation = json.loads(open('vacation.json', 'r').read())
+        for n in all_librarians:
+            if librarian[n]["name"] not in vacation:
+                vacation[librarian[n]['name']] = []
+    else:
+        vacation = {}
+        for n in all_librarians:
+            vacation[librarian[n]['name']] = []
+
+    print(vacation)
+
     if rules['oneLibrariaPerShift']:
         oneLibrariaPerShift = model.NewBoolVar('oneLibrariaPerShift')
         # Each shift at each location is assigned to exactly 1 librarian
@@ -675,7 +687,7 @@ if __name__ == '__main__':
     parser.add_argument('--file', help='read from Excel sheet')
 
     args = parser.parse_args()
-    log_message(args)
+    log_message(str(args))
 
     if args.no_file:
         filename = ''

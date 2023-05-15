@@ -181,18 +181,18 @@ def read_work_schedules(xlsx_filename):
             if row[0] is not None:
                 cells = [cell.value for cell in row]
                 if cells[0] is not None:
-                    name = ' '.join((cells[1], cells[0]))
+                    name = cells[0]
                     log_message(name)
                     n += 1
                     librarians[n] = {'name': name}
-                    librarians[n]['sector'] = cells[2]
-                    librarians[n]['type'] = cells[3]
-                    librarians[n]['prefered_length'] = cells[4+max_day]
+                    librarians[n]['sector'] = cells[1]
+                    librarians[n]['type'] = cells[2]
+                    librarians[n]['prefered_length'] = cells[3+max_day]
                     # TODO replace fixed constants!
                     new_roster = numpy.zeros(shape=(max_day, max_shift, max_location), dtype=numpy.int8)
                     d = -1
                     # Extract extended work hours
-                    for x in cells[4:4+max_day]:
+                    for x in cells[3:3+max_day]:
                         # TODO probably not valid for 2h shifts
                         # new day
                         d += 1
