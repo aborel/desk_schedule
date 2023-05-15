@@ -214,6 +214,21 @@ def main():
                 n_conditions += 1
         model.Proto().assumptions.append(noTwelveToFourteen.Index())
 
+    if rules['maxDaysAtDesk']:
+        maxDaysAtDesk = model.NewBoolVar('maxDaysAtDesk')
+        # daily_desk = {}
+        day_at_desk = {}
+        for n in all_librarians:
+            for d in all_days:
+                # daily_desk[(n, d)] = model.NewIntVar(0, 24, 'dailydesk_n%id%i' % (n, d))
+                day_at_desk[(n, d)] = model.NewIntVar(0, 1, 'dayatdesk_n%id%i' % (n, d))
+        #for n in all_librarians:
+        for n in all_librarians:
+            for d in all_days:
+                model.AddMaxEquality(day_at_desk[(n, d)], [shifts[(n, d, s, lo)] for s in all_shifts for lo in all_locations])
+            model.Add(sum([day_at_desk[(n, d)] for d in all_days]) <= quota[librarians[n]['type']][2])
+            
+        model.Proto().assumptions.append(maxDaysAtDesk.Index())
 
     # Try to distribute the shifts evenly, so that each librarian works
     # his quota of shifts (or quota - 1) on the active or reserve locations
@@ -296,7 +311,7 @@ def main():
     if rules['searchForAllSolutions']:
         # Experimental: exhaustive solution search
         solver_multi = cp_model.CpSolver()
-        array_solution_printer = cp_model.VarArrayAndObjectiveSolutionPrinter([shifts[(n, d, s, lo)] for lo in all_locations
+        array_solution_printer = cp_model.VVarArrayAndObjectiveSolutionPrinter([shifts[(n, d, s, lo)] for lo in all_locations
             for n in all_librarians for s in all_shifts for d in all_days])
         solver_multi.parameters.enumerate_all_solutions = True
         solutions_array = solver_multi.Solve(model, array_solution_printer)
@@ -405,9 +420,11 @@ def main():
             for d in all_days for s in all_shifts for lo in all_locations if locations[lo]['name'].lower().find('remplacement') >= 0)
         score_reserve += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])
             for d in all_days for lo in all_locations if locations[lo]['name'].lower().find('remplacement') >= 0)
+        score_days = sum([1 for d in all_days if sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts for lo in all_locations]) > 0])
         s1 = f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]}'
         s2 = f' and acting as a reserve for {score_reserve}/{quota[librarians[n]["type"]][1]} shifts'
-        line = s1 + s2
+        s3 = f', with {score_days} days on duty'
+        line = s1 + s2 + s3
         print(line)
         report += line + '<br/>\n'
 

@@ -87,7 +87,8 @@ def read_work_schedules(xlsx_filename):
                 category = cells[0]
                 worked = int(cells[1])
                 reserve = int(cells[2])
-                quota[category] = (worked, reserve)
+                max_days = int(cells[3])
+                quota[category] = (worked, reserve, max_days)
 
     print(locations)
     max_location = len(locations.keys())    
