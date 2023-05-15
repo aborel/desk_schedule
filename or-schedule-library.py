@@ -49,6 +49,12 @@ locations = {
     2: 'STM'
 }
 
+weekdays = {0: 'Monday',
+    1: 'Tuesday',
+    2: 'Wednsday',
+    3: 'Thursday',
+    4: 'Friday'
+    }
 
 def main():
     # This program tries to find an optimal assignment of librarians to shifts
@@ -60,6 +66,10 @@ def main():
     num_days = 5
     # TODO: deal with replacement shifts later
     num_locations = 3
+
+    from work_schedule import librarians, shift_requests
+    num_librarians = len(librarians.keys())
+
     all_librarians = range(num_librarians)
     all_shifts = range(num_shifts)
     all_days = range(num_days)
@@ -70,7 +80,7 @@ def main():
     # https://stackoverflow.com/questions/19597473/binary-random-array-with-a-specific-proportion-of-ones
     # shift_requests = [numpy.random.choice([0, 1], size=(5,10, 3), p=[4./6, 2./6]) for k in range(43)]
 
-    shift_requests = [numpy.random.choice([0, 1], size=(5,10, 3), p=[3./6, 3./6]) for k in range(43)]
+    #shift_requests = [numpy.random.choice([0, 1], size=(5,10, 3), p=[3./6, 3./6]) for k in range(43)]
 
 
     # Creates the model.
@@ -145,9 +155,9 @@ def main():
                     #print(shifts[(n, d, s, lo)])
                     if solver.Value(shifts[(n, d, s, lo)]) == 1:
                         if shift_requests[n][d][s][lo] == 1:
-                            print(f'librarian {n} works shift {s} at location {locations[lo]} (requested).')
+                            print(f'{librarians[n]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
                         else:
-                            print(f'librarian {n} works shift {s} at location {locations[lo]} (unrequested).')
+                            print(f'{librarians[n]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (problem with work hours).')
         print()
 
     # Statistics.

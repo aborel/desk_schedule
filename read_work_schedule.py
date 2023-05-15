@@ -7,7 +7,7 @@ import openpyxl
 def read_work_schedules(xlsx_filename):
     wb_obj = openpyxl.load_workbook(xlsx_filename)
     sheet = wb_obj.active
-    n = 0
+    n = -1
     availability = []
     librarians = {}
     for row in sheet.iter_rows():
@@ -17,6 +17,7 @@ def read_work_schedules(xlsx_filename):
                 if cells[0] is not None:
                     name = ' '.join((cells[1], cells[0]))
                     print(name)
+                    n += 1
                     librarians[n] = name
                     new_roster = numpy.zeros(shape=(5, 10, 3), dtype=numpy.int8)
                     d = -1
@@ -59,18 +60,18 @@ def read_work_schedules(xlsx_filename):
                                     k = int_boundaries[slot]
                                     while k <= int_boundaries[slot+1]:
                                         # artificial cut-off at 18h00, 18-20h to be handled later
-                                        print(d, k)
                                         if k < 10:
                                             new_roster[d][k][0] = 1
                                             new_roster[d][k][1] = 1
                                             new_roster[d][k][2] = 1
                                         k += 1
             
-                    print(new_roster)
+                    # print(new_roster)
+                    availability.append(new_roster)
         else:
             break
     print()
-
+    return availability, librarians
 
 
 if __name__ == '__main__':
@@ -79,4 +80,10 @@ if __name__ == '__main__':
         print('Le fichier XLSX doit contenir les horaires étendus des collaborateurs')
         exit(1)
     else:
-        read_work_schedules(sys.argv[1])
+        availabilities, librarians = read_work_schedules(sys.argv[1])
+        outfile = open('work_schedule.py', 'w')
+        outfile.write('from numpy import array, int8\n\n')
+        outfile.write(f'librarians = {str(librarians)}\n')
+        outfile.write(f'shift_requests = {str(availabilities)}\n')
+
+
