@@ -50,11 +50,12 @@ sector_holiday_quotas = {
 }
 
 weekdays = {0: 'Monday',
-    1: 'Tuesday',
-    2: 'Wednsday',
-    3: 'Thursday',
-    4: 'Friday'
-    }
+            1: 'Tuesday',
+            2: 'Wednsday',
+            3: 'Thursday',
+            4: 'Friday'
+            }
+
 
 def main():
     # This program tries to find an optimal assignment of librarians to shifts
@@ -64,8 +65,8 @@ def main():
     num_shifts = 11
     num_days = 5
 
-    from work_schedule import librarians, shift_requests, meeting_slots, quota, locations
-
+    from work_schedule import librarians, shift_requests, meeting_slots
+    from work_schedule import quota, locations
 
     # What is the longest desk stay that someone requested?
     max_req_run_length = max([librarians[librarian]['prefered_length'] for librarian in librarians])
@@ -80,7 +81,6 @@ def main():
     all_days = range(num_days)
     all_locations = range(num_locations)
 
-
     # Masks to account for multiple shift preferences
     max_shift = num_shifts-1
     masks = numpy.zeros(shape=(max_run_length, max_shift, max_shift), dtype=numpy.int8)
@@ -88,7 +88,6 @@ def main():
         for offset in range(max_shift-rl):
             for k in range(rl+1):
                 masks[rl][offset][offset+k] = 1
-
 
     # Creates the model.
     model = cp_model.CpModel()
@@ -163,9 +162,9 @@ def main():
         n_conditions += 1
 
     # Try to distribute the shifts evenly, so that each librarian works
-    # min_shifts_per_librarian shifts. If this is not possible, because the total
-    # number of shifts is not divisible by the number of librarians, some librarians will
-    # be assigned one more shift.
+    # min_shifts_per_librarian shifts. If this is not possible, because
+    # the total number of shifts is not divisible by the number of librarians,
+    # some librarians will be assigned one more shift.
     
     # min_shifts_per_librarian = (num_shifts * num_days * num_locations) // num_librarians
     # min_shifts_per_librarian = 1
