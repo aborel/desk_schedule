@@ -129,28 +129,29 @@ def main():
     # TODO: make that 2 SUCCESSIVE shifts if requested
     # TODO: mix Accueil and STM shifts over the week
     for n in all_librarians:
+        delta_vars = []
         for d in all_days:
             model.Add(sum(shifts[(n, d, s, lo)]
                 for s in all_shifts for lo in all_locations) <= max_shfts_per_day)
             n_conditions += 1
 
-            run_length = librarians[n]['prefered_length']-1
+            run_length = librarians[n]['prefered_length']
             
             # Successive shifts preference?
             # The number of changes from "busy" to "free" or back describes
             #  the number of discontinuous shifts
             # somthing like sum(abs(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]))
             for lo in all_locations:
-                delta_vars = []
                 for s in all_shifts[0:-run_length-1]:
                     tmp_var1 = model.NewIntVar(-max_shift, max_shift, 'tmp1deltan%dd%dlo%ds%d' % (n, d, lo, s))
                     model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1)
                     tmp_var2 = model.NewIntVar(0, max_shift, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
                     model.AddAbsEquality(tmp_var2, tmp_var1)
                     delta_vars.append(tmp_var2)
-                model.Add(sum([delta_vars[s] for s in all_shifts[0:-run_length-1]]) <= max_shift - run_length)
-                n_conditions += 1
-                deltas = [(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) for s in all_shifts[0:-run_length-1]]
+        model.Add(sum([delta_vars[s] for s in all_shifts[0:-run_length-1]])*run_length <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
+            for d in all_days for lo in all_locations for s in all_shifts]))
+        n_conditions += 1
+                #deltas = [(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) for s in all_shifts[0:-run_length-1]]
                 #deltas2 = [delta*delta for delta in deltas]
                 #model.Add(sum(deltas2) <= max_shift - run_length)
                 
