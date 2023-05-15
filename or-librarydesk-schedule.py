@@ -283,7 +283,7 @@ def main():
         if rules['noOutOfTimeShift']:        
             model.Add(out_of_time_shifts < 1).OnlyEnforceIf(noOutOfTimeShift)
             n_conditions += 1
-        if rules['minActiveShifts']:      
+        if rules['minActiveShifts']:  
             model.Add(num_hours_worked >= quota[librarians[n]['type']][0] - quota[librarians[n]['type']][0]//2 ).OnlyEnforceIf(minActiveShifts)
             n_conditions += 1
         if rules['minReserveShifts']: 
@@ -369,9 +369,9 @@ def main():
                     # FIXME don't forget the dir meeting check!!!
                     # TESTING: OK with non-1h shifts?
                     if solver.Value(shifts[(n, d, s, lo)]) == 1:
+                        hh = desk_shifts[s][0] // 60
+                        mm = '{:0>2}'.format(desk_shifts[s][0] % 60)
                         if shift_requests[n][d][s][lo] == 1:
-                            hh = desk_shifts[s][0] // 60
-                            mm = '{:0>2}'.format(desk_shifts[s][0] % 60)
                             length = desk_shifts[s][1] / 60
                             if (not d == meeting_slots[librarians[n]['sector']][0]
                                     or s < meeting_slots[librarians[n]['sector']][1]
