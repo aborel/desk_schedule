@@ -96,9 +96,12 @@ def main():
     for d in all_days:
         for s in all_shifts:
             for lo in all_locations:
-                model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 1)
+                if (lo == 2 or lo == 4) and s < 2:
+                    model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0)
+                else:
+                    model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 1)
 
-    # Each librarian works at most 2 shift per day.
+    # Each librarian works at most 3 shift per day.
     # TODO: make that 2 SUCCESSIVE shifts
     for n in all_librarians:
         for d in all_days:
@@ -120,6 +123,8 @@ def main():
         for d in all_days:
             for s in all_shifts:
                 for lo in all_locations:
+                    # TODO: skip STM and STM reserve shifts until 10AM (i.e. shift 2)
+                    # This doesn't seem to work, librarians are still assigned there.
                     if lo < 3:
                         num_shifts_worked += shifts[(n, d, s, lo)]
                     else:
@@ -171,6 +176,7 @@ def main():
                         if shift_requests[n][d][s][lo] == 1:
                             print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
                         else:
+                            # print(shift_requests[n][d])
                             print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (problem with work hours).')
 
         for sector in sector_semester_quotas:
@@ -198,7 +204,7 @@ def main():
 
     print()
     print('Statistics')
-    print('  - Number of constraints met = %i' % solver.ObjectiveValue(),
+    print('  - Solution score = %i' % solver.ObjectiveValue(),
           '(out of', num_librarians * num_locations + num_librarians * 5 + num_days, ')')
     print('  - wall time       : %f s' % solver.WallTime())
 
