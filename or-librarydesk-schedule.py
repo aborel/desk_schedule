@@ -77,14 +77,14 @@ def main():
 
     if args.no_file:
         from work_schedule import librarians, shift_requests, meeting_slots
-        from work_schedule import quota, locations
+        from work_schedule import quota, locations, rules
     elif args.file is not None:
         from read_work_schedule import read_work_schedules
-        shift_requests, librarians, locations, quota, meeting_slots = read_work_schedules(args.file)
+        shift_requests, librarians, locations, quota, meeting_slots, rules = read_work_schedules(args.file)
     else:
         from read_work_schedule import read_work_schedules
         filename = 'Horaires-guichets.xlsx'
-        shift_requests, librarians, locations, quota, meeting_slots = read_work_schedules(filename)
+        shift_requests, librarians, locations, quota, meeting_slots, rules = read_work_schedules(filename)
 
     num_locations = len(locations.keys())
     num_librarians = len(librarians.keys())
@@ -185,6 +185,14 @@ def main():
         for d in all_days:
             model.Add(sum([shifts[(n, d, s, lo)]
                 for s in all_shifts[-2:] for lo in all_locations]) <= 1).OnlyEnforceIf(noSeventeenToTwenty)
+            n_conditions += 1
+
+
+        # prevent 12-13 + 13-14 sequence for any librarian
+        noTwelveToFourteen = model.NewBoolVar('noTwelveToFourteen')
+        for d in all_days:
+            model.Add(sum([shifts[(n, d, s, lo)]
+                for s in [12-8, 13-8] for lo in all_locations]) <= 1).OnlyEnforceIf(noTwelveToFourteen)
             n_conditions += 1
 
     model.Proto().assumptions.append(preferedRunLength.Index())
