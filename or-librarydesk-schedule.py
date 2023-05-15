@@ -118,7 +118,7 @@ def main():
         for d in all_days:
             for s in all_shifts:
                 for lo in all_locations:
-                    if s < locations[lo]['start'] or s > locations[lo]['end']:
+                    if s < locations[lo]['times'][d]['start'] or s > locations[lo]['times'][d]['end']:
                         model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 0).OnlyEnforceIf(oneLibrariaPerShift)
                         n_conditions += 1
                     elif s == all_shifts[-1] and (d == all_days[-1]):
@@ -470,7 +470,7 @@ body {
     for d in all_days:
         for s in all_shifts:
             for lo in all_locations:
-                if s < locations[lo]['start'] or s > locations[lo]['end']:
+                if s < locations[lo]['times'][d]['start'] or s > locations[lo]['times'][d]['end']:
                     pass
                 elif s == all_shifts[-1] and (d == all_days[-1]):
                     pass
