@@ -166,15 +166,15 @@ def main():
                 # somthing like sum(abs(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]))
                 delta_vars[n].append([])
                 for lo in all_locations:
-                    for s in all_shifts[0:-librarians[n]['prefered_length']]:
+                    for s in all_shifts[0:-1]:
                         tmp_var1 = model.NewIntVar(-max_shift, max_shift, 'tmp1deltan%dd%dlo%ds%d' % (n, d, lo, s))
                         model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1)
                         tmp_var2 = model.NewIntVar(0, max_shift*2, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
                         model.AddAbsEquality(tmp_var2, tmp_var1)
                         delta_vars[n][d].append(tmp_var2)
-            model.Add(sum([delta_vars[n][d][s] for s in all_shifts[0:-librarians[n]['prefered_length']]])*librarians[n]['prefered_length'] <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
-                for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
-            n_conditions += 1
+                model.Add(sum([delta_vars[n][d][s] for s in all_shifts[0:-1]])*librarians[n]['prefered_length'] <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
+                    for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
+                n_conditions += 1
 
         model.Proto().assumptions.append(preferedRunLength.Index())
         
