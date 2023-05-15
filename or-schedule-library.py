@@ -160,12 +160,18 @@ def main():
                             print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
                         else:
                             print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (problem with work hours).')
+
+        for sector in sector_semester_quotas:
+            score = sum([solver.Value(shifts[(n, d, s, lo)]) for n in all_librarians
+                        for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
+            print(f'Daily shifts for {sector.upper()}: {score}')
+
         print()
+
     for n in all_librarians:
         score = sum(solver.Value(shifts[(n, d, s, lo)])
             for d in all_days for s in all_shifts for lo in all_locations)
         print(f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]} shifts')
-
 
 
     # Statistics.
