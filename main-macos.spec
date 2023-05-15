@@ -48,3 +48,7 @@ coll = COLLECT(
     upx_exclude=[],
     name='desk_schedule_ui',
 )
+app = BUNDLE(coll,
+             name='desk_schedule.app',
+             icon=None,
+             bundle_identifier=None)
