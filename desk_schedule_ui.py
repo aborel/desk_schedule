@@ -14,7 +14,7 @@ from functools import partial
 from unicodedata import normalize
 
 from parse_absences import parse_absences
-from errors import error_file, error_file_header, init_error_log, log__error_message, get_stack_trace
+from errors import error_file, error_file_header, init_error_log, log_error_message, get_stack_trace
 import or_librarydesk_schedule
 
 version = "1.0"
@@ -54,7 +54,8 @@ def run_desk_schedule(tkroot, width_chars):
     init_error_log()
     
     if absences is not None:
-        parse_absences(absences)
+        if absences != '':
+            parse_absences(absences)
 
     if horaires is not None:
         # TODO call or-librarydesk-schedule, need to make it a module first
