@@ -56,7 +56,7 @@ sector_holiday_quotas = {
 
 def main():
     # This program tries to find an optimal assignment of librarians to shifts
-    # (10 shifts per day, for 5 days), subject to some constraints (see below).
+    # (typically 10 shifts per day for 5 days), subject to some constraints (see below).
     # Each librarian can request to be assigned to specific shifts.
     # The optimal assignment maximizes the number of fulfilled shift requests.
 
