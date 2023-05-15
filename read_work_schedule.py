@@ -104,7 +104,8 @@ def read_work_schedules(xlsx_filename):
                     librarians[n]['sector'] = cells[2]
                     librarians[n]['type'] = cells[3]
                     librarians[n]['prefered_length'] = cells[9]
-                    new_roster = numpy.zeros(shape=(5, max_shift+1, 5), dtype=numpy.int8)
+                    # TODO replace fixed constants!
+                    new_roster = numpy.zeros(shape=(5, max_shift+1, max_location), dtype=numpy.int8)
                     d = -1
                     # Extract extended work hours
                     for x in cells[4:9]:
@@ -146,11 +147,8 @@ def read_work_schedules(xlsx_filename):
                                     while k <= int_boundaries[slot+1]:
                                         # 10 regular shifts (8-17h) and 1 2-hour shift at 18:00, only 1 location
                                         if k < max_shift:
-                                            new_roster[d][k][0] = 1
-                                            new_roster[d][k][1] = 1
-                                            new_roster[d][k][2] = 1
-                                            new_roster[d][k][3] = 1
-                                            new_roster[d][k][4] = 1
+                                            for lo in range(max_location):
+                                                new_roster[d][k][lo] = 1
                                         if k == max_shift and not d == (max_day-1):
                                             new_roster[d][k][0] = 1
 
