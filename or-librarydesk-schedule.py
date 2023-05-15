@@ -94,17 +94,28 @@ def main():
     all_days = range(num_days)
     all_locations = range(num_locations)
 
+
     # Maximum normal shift, the last one was special in the old shift model
     max_shift = num_shifts
-    print('rules:', rules)
+    diagnostics += f' \n<br/>rules: {rules} <br/>\n'
 
     if rules['ScaleQuotas']:
         scale = num_days // 5
-        print(f'quotas will be scaled by an integer factor of {scale} (num_days = {num_days})')
+        diagnostics += f'quotas will be scaled by an integer factor of {scale} (num_days = {num_days}) <br/>\n'
         for category in quota:
             quota[category] = (quota[category][0] * scale,
                 quota[category][1] * scale,
                 quota[category][2] * scale)
+
+    # Diagnostics: compate the sum of minimal quotas and the total amount of shofts to fill
+    minimum_quotas = sum([quota[librarians[n]['type']][1] for n in all_librarians])
+    maximum_quotas = sum([quota[librarians[n]['type']][0] for n in all_librarians])
+    total_shifts = num_days * num_shifts * num_locations
+    diagnostics += f'Shift count: max {maximum_quotas}, min {minimum_quotas}, total {total_shifts} <br/>'
+    if (total_shifts < minimum_quotas) or (total_shifts > maximum_quotas):
+        diagnostics += 'Your quotas cannot be met with the proposed shifts, skip a few quota rules! <br/>'
+
+    print(diagnostics)
 
     # Creates the model.
     model = cp_model.CpModel()
