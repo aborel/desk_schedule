@@ -105,12 +105,12 @@ def main():
             for lo in all_locations:
                 model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 1)
 
-    # Each librarian works at most 1 shift per day.
+    # Each librarian works at most 2 shift per day.
     # TODO: make that 2 SUCCESSIVE shifts
     for n in all_librarians:
         for d in all_days:
             model.Add(sum(shifts[(n, d, s, lo)]
-                for s in all_shifts for lo in all_locations) <= 1)
+                for s in all_shifts for lo in all_locations) <= 2)
 
     # Try to distribute the shifts evenly, so that each librarian works
     # min_shifts_per_librarian shifts. If this is not possible, because the total
@@ -127,7 +127,7 @@ def main():
             for s in all_shifts:
                 for lo in all_locations:
                     num_shifts_worked += shifts[(n, d, s, lo)]
-                    out_of_time_shifts += shifts[(n, d, s, lo)] if shift_requests[n][d][s][lo] == 0 else 0
+                    out_of_time_shifts += shifts[(n, d, s, lo)] * (1-shift_requests[n][d][s][lo])
 
         model.Add(out_of_time_shifts <= 1)
         model.Add(min_shifts_per_librarian <= num_shifts_worked)
@@ -172,8 +172,8 @@ def main():
 
     print()
     print('Statistics')
-    print('  - Number of shift requests met = %i' % solver.ObjectiveValue(),
-          '(out of', num_librarians * min_shifts_per_librarian, ')')
+    print('  - Number of constraints met = %i' % solver.ObjectiveValue(),
+          '(out of', num_librarians * 3 + num_librarians + num_days, ')')
     print('  - wall time       : %f s' % solver.WallTime())
 
 
