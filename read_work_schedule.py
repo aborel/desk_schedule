@@ -121,9 +121,9 @@ def read_work_schedules(xlsx_filename):
                 cells = [cell.value for cell in row]
                 category = cells[0]
                 # 2022-05-23 scale up or down if we deal with periods different from 1 business week
-                worked = int(cells[1] * max_day // 5)
-                reserve = int(cells[2] * max_day // 5)
-                max_days = int(cells[3] * max_day // 5)
+                worked = int(cells[1])
+                reserve = int(cells[2])
+                max_days = int(cells[3])
                 quota[category] = (worked, reserve, max_days)
 
     print(locations)

@@ -97,7 +97,15 @@ def main():
     # Maximum normal shift, the last one was special in the old shift model
     max_shift = num_shifts
     print('rules:', rules)
- 
+
+    if rules['ScaleQuotas']:
+        scale = num_days // 5
+        print(f'quotas will be scaled by an integer factor of {scale} (num_days = {num_days})')
+        for category in quota:
+            quota[category] = (quota[category][0] * scale,
+                quota[category][1] * scale,
+                quota[category][2] * scale)
+
     # Creates the model.
     model = cp_model.CpModel()
     v0 = model.NewBoolVar("buggyVarIndexToVarProto")
@@ -169,7 +177,7 @@ def main():
         model.Proto().assumptions.append(maxOneShiftPerDay.Index())
 
     if rules['minOneShiftAverage']:
-        min_average_shifts = 1
+        min_average_shifts = 6
         # Each librarian works at at least min_average_shifts=1 shifts per week/over the period.
         minOneShiftAverage = model.NewBoolVar('minOneShifAtverage')
         for n in all_librarians:
