@@ -3,6 +3,10 @@ import numpy
 import dateutil.parser
 import openpyxl
 
+max_shift = 10
+max_location = 5
+max_day = 5
+
 
 def read_work_schedules(xlsx_filename):
     wb_obj = openpyxl.load_workbook(xlsx_filename)
@@ -21,7 +25,7 @@ def read_work_schedules(xlsx_filename):
                     librarians[n] = {'name': name}
                     librarians[n]['sector'] = cells[2]
                     librarians[n]['type'] = cells[3]
-                    new_roster = numpy.zeros(shape=(5, 10, 5), dtype=numpy.int8)
+                    new_roster = numpy.zeros(shape=(5, max_shift+1, 5), dtype=numpy.int8)
                     d = -1
                     # Extract extended work hours
                     for x in cells[4:9]:
@@ -61,13 +65,16 @@ def read_work_schedules(xlsx_filename):
                                 for slot in range(len(int_boundaries) // 2):
                                     k = int_boundaries[slot]
                                     while k <= int_boundaries[slot+1]:
-                                        # artificial cut-off at 18h00, 18-20h to be handled later
-                                        if k < 10:
+                                        # 10 regular shifts (8-17h) and 1 2-hour shift at 18:00, only 1 location
+                                        if k < max_shift:
                                             new_roster[d][k][0] = 1
                                             new_roster[d][k][1] = 1
                                             new_roster[d][k][2] = 1
                                             new_roster[d][k][3] = 1
                                             new_roster[d][k][4] = 1
+                                        if k == max_shift and not d == (max_day-1):
+                                            new_roster[d][k][0] = 1
+
                                         k += 1
             
                     # print(new_roster)
