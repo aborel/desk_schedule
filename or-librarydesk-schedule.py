@@ -127,7 +127,7 @@ def main():
 
     # Each librarian works at most max_shifts_per_day=2 shift per day.
     # TODO: make that 2 SUCCESSIVE shifts if requested
-    # TODO: mix Accueil and STM shifts over the week
+    # TODO: mix Accueil and STM shifts over the week?
     for n in all_librarians:
         delta_vars = []
         for d in all_days:
@@ -139,10 +139,10 @@ def main():
             
             # Successive shifts preference?
             # The number of changes from "busy" to "free" or back describes
-            #  the number of discontinuous shifts
+            # the number of discontinuous shifts
             # somthing like sum(abs(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]))
             for lo in all_locations:
-                for s in all_shifts[0:-run_length-1]:
+                for s in all_shifts[0:-run_length]:
                     tmp_var1 = model.NewIntVar(-max_shift, max_shift, 'tmp1deltan%dd%dlo%ds%d' % (n, d, lo, s))
                     model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1)
                     tmp_var2 = model.NewIntVar(0, max_shift, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
@@ -161,6 +161,12 @@ def main():
         model.Add(sum(shifts[(n, d, s, lo)]
             for d in all_days for lo in all_locations) <= 1)
         n_conditions += 1
+
+        # WIP: prevent 17-18 + 18-20 sequence for any librarian
+        for d in all_days:
+            model.Add(sum(shifts[(n, d, s, lo)]
+                for s in all_shifts[-2:] for lo in all_locations) <= 1)
+            n_conditions += 1
 
     # Try to distribute the shifts evenly, so that each librarian works
     # min_shifts_per_librarian shifts. If this is not possible, because
