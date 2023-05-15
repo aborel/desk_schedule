@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
 # From https://developers.google.com/optimization/scheduling/employee_scheduling
 
 from ortools.sat.python import cp_model
@@ -5,6 +8,7 @@ import numpy
 from numpy import array
 import itertools
 import argparse
+from datetime import datetime
 
 max_shifts_per_day = 2
 
@@ -445,7 +449,19 @@ body {
 
     title = f"<h1>{main_title}</h1>"
 
-    score = f"Solution score = {solver.ObjectiveValue()} (max possible result {n_conditions})"
+    max_score = 0
+    for d in all_days:
+        for s in all_shifts:
+            for lo in all_locations:
+                if s < locations[lo]['start'] or s > locations[lo]['end']:
+                    pass
+                elif s == all_shifts[-1] and (d == all_days[-1]):
+                    pass
+                else:
+                    max_score += 1 
+    score = f"Solution score = {solver.ObjectiveValue()} (max possible result {max_score})\n"
+    score += f"<br/>{n_conditions} conditions evaluated\n"
+    score += f"<br/>Run on {datetime.now().isoformat()}\n"
     stat_details = f'{solver.ResponseStats()}'
 
 
