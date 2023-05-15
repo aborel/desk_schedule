@@ -216,12 +216,21 @@ def read_work_schedules(xlsx_filename):
                                     k += 1
                                 #print('int_boundaries: ', int_boundaries)
                                 for slot in range(len(int_boundaries) // 2):
+                                    # for special vacation times, a possible staffmember slot could en before
+                                    # the shifts begin...
+                                    if int_boundaries[slot*2+1] <= min([x[0] for x in shifts]):
+                                        continue
+                                    # Or the end of the last shift could take place before  slot begins
+                                    if int_boundaries[slot*2] >= max([x[0] for x in shifts]):
+                                        continue
+
                                     if shifts[0][0] <= int_boundaries[slot*2]:
                                         lower_time = min([x[0] for x in shifts if x[0] >= int_boundaries[slot*2]])
                                     else:
                                         lower_time = shifts[0][0]
                                     lower_slot = [x[0] for x in shifts].index(lower_time)
-                                    #print(int_boundaries[slot*2+1],  [x[0] for x in shifts])
+
+                                    # print(int_boundaries[slot*2+1],  [x[0] for x in shifts])
                                     upper_time = max([x[0] for x in shifts if x[0] <= int_boundaries[slot*2+1]])
                                     # the last 100% possible slot is one below
                                     upper_slot = [x[0] for x in shifts].index(upper_time) - 1
@@ -276,6 +285,7 @@ def check_minima(availabilities, librarians, locations, quota, meeting_slots, ru
             for l in range(max_location):
                 for n in range(len(librarians)):
                     test_roster[d][s][l] += availabilities[n][d][s][l]
+            print(f'd {d} s {s} l {l}')
             if test_roster[d][s][0] < sum([shifts[s][0] - shifts[s][0]  >= locations[l]['times'][d]['start'] \
                 and shifts[-1][0] - shifts[s][0] <= locations[l]['times'][d]['start'] for l in range(max_location)]):
                     hh = '{:0>2}'.format(shifts[s][0]//60)
