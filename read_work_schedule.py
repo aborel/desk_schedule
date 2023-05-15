@@ -55,16 +55,27 @@ def read_work_schedules(xlsx_filename):
             if row[0] is not None:
                 cells = [cell.value for cell in row]
                 if cells[0] is not None:
-                    time = int(cells[0])
+                    parsed_cell = cells[0].replace('h', ':').split(':')
+                    time = int(parsed_cell[0]) * 60
                     try:
-                        value = int(cells[1])
+                        time += int(parsed_cell[1])
+                    except (IndexError, ValueError) as e:
+                        pass
+                    try:
+                        parsed_cell = cells[1].replace('h', ':').split(':')
+                        value = int(parsed_cell[0]) * 60
+                        try:
+                            time += int(parsed_cell[1])
+                        except (IndexError, ValueError) as e:
+                            pass
                     except ValueError:
-                        value = 1
+                        value = 0
                     shifts.append((time, value))
-    print('shifts: ',shifts)
+    print('shifts: ', shifts)
     max_shift = len(shifts)
 
-    # Get locations from 2nd sheet
+
+    # Get locations from relevant sheet
     sheet = wb_obj['guichets']
     locations = {}
     for row in sheet.iter_rows():
@@ -83,19 +94,19 @@ def read_work_schedules(xlsx_filename):
                     else:
                         location_hours = x.split('-')
                         for l in location_hours:
-                            hh = int(l.lower().split('h')[0])
+                            hh = int(l.lower().split('h')[0])*60
                             mm = l.lower().split('h')[1]
                             if len(mm) > 0:
-                                mm = int(mm)/60.0
+                                mm = int(mm)
                             else:
                                 mm = 0
                             times.append(hh)
                         print(times, shifts, [x[0] for x in shifts if x[0] <= times[0]])
-                        relative_times = (max([x[0] for x in shifts if x[0] <= times[0]]) - shifts[0][0] ,
-                            min([x[0] for x in shifts if x[0] >= times[1]]) - shifts[0][0] )
-                    print('times: ', relative_times)
+                        absolute_times = (max([x[0] for x in shifts if x[0] <= times[0]]),
+                            min([x[0] for x in shifts if x[0] + x[1] >= times[1]]))
+                    print('times: ', absolute_times)
                 
-                    locations[cells[0]]['times'][day] = {'start': relative_times[0], 'end': relative_times[1]}
+                    locations[cells[0]]['times'][day] = {'start': absolute_times[0], 'end': absolute_times[1]}
 
     sheet = wb_obj['quotas']
     quota = {}
@@ -134,16 +145,19 @@ def read_work_schedules(xlsx_filename):
                             print(f'{x} is not a time')
                         else:
                             # print([x, x.lower().split('h')])
-                            hh = int(x.lower().split('h')[0])
+                            hh = int(x.lower().split('h')[0])*60
                             minutes = x.lower().split('h')[1]
                             if len(minutes) == 0:
                                 minutes = '0'
-                            mm = int(minutes)/60.0
-                            print('meeting: ', hh, mm, [x[0] - shifts[0][0] for x in shifts if x[0] <= hh + mm])
-                            times.append(max([x[0] - shifts[0][0] for x in shifts if x[0] <= hh + mm]))
-                            times.append(min([x[0] - shifts[0][0] for x in shifts if x[0] >= hh + mm]))
+                            mm = int(minutes)
+                            print('meeting: ', hh, mm, [x[0] for x in shifts if x[0] <= hh + mm])
+                            times.append(max([x[0] for x in shifts if x[0] <= hh + mm]))
+                            times.append(min([x[0] for x in shifts if x[0] >= hh + mm]))
+                            if times[-1] > shifts[-1][0]:
+                                pass
                     print(times)
-                    meeting_slots[group] = (day, times[0], times[3])
+                    print(shifts)
+                    meeting_slots[group] = (day, [x[0] for x in shifts].index(times[0]), [x[0] for x in shifts].index(times[3]))
 
     sheet = wb_obj['guichetiers']
     n = -1
@@ -189,30 +203,32 @@ def read_work_schedules(xlsx_filename):
                                 k = 0
                                 for b in boundaries:
                                     split_b = b.strip().split('h')
-                                    hour = int(split_b[0])
-                                    if k % 2 == 0:
-                                        if split_b[1] > '00':
-                                            hour += 1
-                                    else:
-                                        hour -= 1
+                                    exact_time = int(split_b[0]) * 60
+                                    try:
+                                        exact_time += int(split_b[1])
+                                    except (IndexError, ValueError) as e:
+                                        pass
 
-                                    int_boundaries.append(hour)
+                                    int_boundaries.append(exact_time)
                                     k += 1
-                                # print('int_boundaries: ', int_boundaries)
+                                print('int_boundaries: ', int_boundaries)
                                 for slot in range(len(int_boundaries) // 2):
                                     if shifts[0][0] <= int_boundaries[slot*2]:
                                         lower_time = min([x[0] for x in shifts if x[0] >= int_boundaries[slot*2]])
                                     else:
                                         lower_time = shifts[0][0]
+                                    lower_slot = [x[0] for x in shifts].index(lower_time)
                                     if shifts[-1][0] >= int_boundaries[slot*2+1]:
                                         upper_time = max([x[0] for x in shifts if x[0] <= int_boundaries[slot*2+1]])
                                     else:
                                         upper_time = shifts[-1][0]
+                                    upper_slot = [x[0] for x in shifts].index(upper_time)
 
                                     print(f'lower-upper: {lower_time}-{upper_time}')
-                                    k = int_boundaries[slot*2] - shifts[0][0]
-                                    while k <= int_boundaries[slot*2+1] - shifts[0][0]:
-                                        print([d, k])
+                                    print(f'lower-upper: {lower_slot}-{upper_slot}')
+                                    k = lower_slot
+                                    while k <= upper_slot:
+                                        # print([d, k])
                                         if k < max_shift - 1:
                                             for lo in range(max_location):
                                                 new_roster[d][k][lo] = 1
