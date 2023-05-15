@@ -276,12 +276,11 @@ def check_minima(availabilities, librarians, locations, quota, meeting_slots, ru
             for l in range(max_location):
                 for n in range(len(librarians)):
                     test_roster[d][s][l] += availabilities[n][d][s][l]
-            if not s == max_day or not s == max_shift:
-                if test_roster[d][s][0] < sum([shifts[s][0] - shifts[s][0]  >= locations[l]['times'][d]['start'] \
-                    and shifts[-1][0] - shifts[s][0] <= locations[l]['times'][d]['start'] for l in range(max_location)]):
-                        hh = '{:0>2}'.format(shifts[s][0]//60)
-                        mm = '{:0>2}'.format(shifts[s][0]%60)
-                        msg += f'Warning: not enough people to fill the {weekdays[d]} {hh}h{mm} slot<br/>\n'
+            if test_roster[d][s][0] < sum([shifts[s][0] - shifts[s][0]  >= locations[l]['times'][d]['start'] \
+                and shifts[-1][0] - shifts[s][0] <= locations[l]['times'][d]['start'] for l in range(max_location)]):
+                    hh = '{:0>2}'.format(shifts[s][0]//60)
+                    mm = '{:0>2}'.format(shifts[s][0]%60)
+                    msg += f'Warning: not enough staff to fill the {weekdays[d]} {hh}h{mm} slot<br/>\n'
 
     for d in range(max_day):
         print(weekdays[d])
