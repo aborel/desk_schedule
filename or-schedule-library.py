@@ -206,6 +206,7 @@ def main():
     print('Statistics')
     print('  - Solution score = %i' % solver.ObjectiveValue(),
           '(out of', num_librarians * num_locations + num_librarians * 5 + num_days, ')')
+    print(f' - Solution statistics:\n{solver.ResponseStats()}')
     print('  - wall time       : %f s' % solver.WallTime())
 
 
