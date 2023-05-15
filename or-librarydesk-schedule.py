@@ -209,10 +209,13 @@ def main():
                     #print(shifts[(n, d, s, lo)])
                     if solver.Value(shifts[(n, d, s, lo)]) == 1:
                         if shift_requests[n][d][s][lo] == 1:
-                            if s < all_shifts[-1]:
-                                print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
+                            if not d == meeting_slots[librarians[n]['sector']][0] or s < meeting_slots[librarians[n]['sector']][1] or s > meeting_slots[librarians[n]['sector']][2]:
+                                if s < all_shifts[-1]:
+                                    print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
+                                else:
+                                    print(f'{librarians[n]["name"]} works 2h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
                             else:
-                                print(f'{librarians[n]["name"]} works 2h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
+                                print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (problem with a group meeting).')                                
                         else:
                             # print(shift_requests[n][d])
                             print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (problem with work hours).')
