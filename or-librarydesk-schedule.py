@@ -6,7 +6,7 @@ from numpy import array
 import itertools
 import argparse
 
-max_shfts_per_day = 2
+max_shifts_per_day = 2
 
 # based on K_Guichets//K2_Guichets_physiques/K2.03_Tournus/quotas_par_guichetier_20190131.JPG
 # TODO: ask for the rule for bl+coordinator
@@ -152,7 +152,7 @@ def main():
             model.Add(sum([shifts[(n, d, s, lo)]
                 for s in all_shifts for lo in all_locations]) +
             sum([shifts[(n, d, s, lo)]
-                for s in all_shifts[-1:] for lo in all_locations]) <= max_shfts_per_day)
+                for s in all_shifts[-1:] for lo in all_locations]) <= max_shifts_per_day)
             n_conditions += 1
 
             run_length = librarians[n]['prefered_length']
