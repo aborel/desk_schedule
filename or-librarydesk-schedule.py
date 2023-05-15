@@ -147,22 +147,26 @@ def main():
                     n_conditions += 1 
         model.Proto().assumptions.append(oneShiftAtATime.Index())
 
-    if rules['preferedRunLength']:
-        # Each librarian works at most max_shifts_per_day=2 shift per day.
-        # TODO: make that 2 SUCCESSIVE shifts if requested
-        # TODO: mix Accueil and STM shifts over the week?
-        preferedRunLength = model.NewBoolVar('preferedRunLength')
+    if rules['maxTwoShiftsPerDay']:
         for n in all_librarians:
             delta_vars = []
             for d in all_days:
-                delta_vars.append([])
                 model.Add(sum([shifts[(n, d, s, lo)]
                     for s in all_shifts for lo in all_locations]) +
                 sum([shifts[(n, d, s, lo)]
                     for s in all_shifts[-1:] for lo in all_locations]) <= max_shifts_per_day)
                 n_conditions += 1
 
-                run_length = librarians[n]['prefered_length']
+    if rules['preferedRunLength']:
+        # Each librarian works at most max_shifts_per_day=2 shift per day.
+        # TODO: make that 2 SUCCESSIVE shifts if requested
+        # TODO: mix Accueil and STM shifts over the week?
+        preferedRunLength = model.NewBoolVar('preferedRunLength')
+        for n in all_librarians:
+            run_length = librarians[n]['prefered_length']
+            delta_vars = []
+            for d in all_days:
+                
                 
                 # Successive shifts preference?
                 # The number of changes from "busy" to "free" or back describes
@@ -275,7 +279,7 @@ def main():
                 for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
 
             #model.Add(sector_score[d][sector] <= sector_semester_quotas[sector])
-               
+
 
     # pylint: disable=g-complex-comprehension
     model.Maximize(
