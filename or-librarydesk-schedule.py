@@ -151,6 +151,7 @@ def main():
         for n in all_librarians:
             delta_vars = []
             for d in all_days:
+                delta_vars.append([])
                 model.Add(sum([shifts[(n, d, s, lo)]
                     for s in all_shifts for lo in all_locations]) +
                 sum([shifts[(n, d, s, lo)]
@@ -169,12 +170,13 @@ def main():
                         model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1).OnlyEnforceIf(preferedRunLength)
                         tmp_var2 = model.NewIntVar(0, max_shift, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
                         model.AddAbsEquality(tmp_var2, tmp_var1)
-                        delta_vars.append(tmp_var2)
-            model.Add(sum([delta_vars[s] for s in all_shifts[0:-run_length-1]])*run_length <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
-                for d in all_days for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
+                        delta_vars[d].append(tmp_var2)
+            model.Add(sum([delta_vars[d][s] for s in all_shifts[0:-run_length]])*run_length <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
+                for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
             n_conditions += 1
 
         model.Proto().assumptions.append(preferedRunLength.Index())
+        
 
     if rules['maxOneLateShift']:
         # only assign max. one 18-20 shift for a given librarian
@@ -310,6 +312,7 @@ def main():
                 for n in all_librarians:
                     #print(n, d, s, lo)
                     #print(shifts[(n, d, s, lo)])
+                    # FIXME don't forget the dir meeting check!!!
                     if solver.Value(shifts[(n, d, s, lo)]) == 1:
                         if shift_requests[n][d][s][lo] == 1:
                             if not d == meeting_slots[librarians[n]['sector']][0] or s < meeting_slots[librarians[n]['sector']][1] or s > meeting_slots[librarians[n]['sector']][2]:
