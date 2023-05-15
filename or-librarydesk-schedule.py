@@ -113,7 +113,7 @@ def main():
     total_shifts = num_days * num_shifts * num_locations
     diagnostics += f'Shift count: max {maximum_quotas}, min {minimum_quotas}, total {total_shifts} <br/>'
     if (total_shifts < minimum_quotas) or (total_shifts > maximum_quotas):
-        diagnostics += 'Your quotas cannot be met with the proposed shifts, skip a few quota rules! <br/>'
+        diagnostics += 'Your quotas cannot be met with the proposed shifts, remember to skip a few quota rules! <br/>'
 
     print(diagnostics)
 
@@ -395,7 +395,8 @@ def main():
     print(diagnostics)
     print()
 
-    report = diagnostics
+    #report = diagnostics
+    report = ''
     for d in all_days:
         line = f'Day {d}'
         print(line)
@@ -636,8 +637,10 @@ body {
     });
   </script>
     """
-    body = f"<body>\n{title}\n{datatables_init}\n<div>{score}</div><pre><code>"
-    body += f"<h2>Technical statistics:</h2>\n{stat_details}</code></pre>"
+    body = f"<body>\n{title}\n{datatables_init}\n"
+    body += f"<h2>Diagnostics:</h2>\n<pre><code>{diagnostics}</code></pre>"
+    body += f"<h2>Technical statistics:</h2>"
+    body += f"<div>{score}</div>\n<pre><code>{stat_details}</code></pre>"
     body += f"\n<h2>Summary table (for guichetbiblio.epfl.ch)</h2>"
     body += f"\n{guichetbiblio_table}"
     body += f"\n<h2>Summary table (for other use cases)</h2>"
