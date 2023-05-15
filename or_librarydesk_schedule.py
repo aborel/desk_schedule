@@ -142,7 +142,7 @@ def main(parameter_file):
         for n in all_librarians:
             vacation[librarians[n]['name']] = []
 
-    print(vacation)
+    log_message(str(vacation))
 
     ## TODO integration vacation data into shift_requests
     for n in all_librarians:
@@ -152,11 +152,12 @@ def main(parameter_file):
             # QUICKFIX make sure week days are in the current week if no specific dates are given
             if desk_day < dateparser.parse('Sunday'):
                 desk_day += timedelta(days=7)
-            print(weekdays[d], desk_day)
+            log_message(f'{weekdays[d]} is {desk_day}')
             for leave in vacation[librarians[n]['name']]:
-                print(librarians[n]['name'], leave)
+                log_message(f"{librarians[n]['name']} on vacation: {leave}")
+                # FIXME this doesn't really work for 1-day leaves. F
                 if (desk_day >= dateparser.parse(leave[0])) and (desk_day <= dateparser.parse(leave[1])):
-                    print(f'{librarians[n]} must not work on {weekdays[d]}')
+                    log_message(f'{librarians[n]} must not work on {weekdays[d]}')
                     for s in all_shifts:
                         for lo in all_locations:
                             # TESTING this could be it
