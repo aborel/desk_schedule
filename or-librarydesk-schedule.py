@@ -94,7 +94,6 @@ def main():
     #print(shifts)
 
     # Each shift at each location is assigned to exactly 1 librarian
-    # TODO take into account the shorter STM hour range
     for d in all_days:
         for s in all_shifts:
             for lo in all_locations:
@@ -106,9 +105,7 @@ def main():
                     n_conditions += 1
                 else:
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 1)
-                    n_conditions += 1
-
-    # TODO only assign 1 18-20 shift for a given librarian
+                    n_conditions += 1 
 
     # Each librarian works at most 3 shift per day.
     # TODO: make that 2 SUCCESSIVE shifts
@@ -117,6 +114,11 @@ def main():
             model.Add(sum(shifts[(n, d, s, lo)]
                 for s in all_shifts for lo in all_locations) <= 3)
             n_conditions += 1
+        # only assign max. one 18-20 shift for a given librarian
+        s = all_shifts[-1]
+        model.Add(sum(shifts[(n, d, s, lo)]
+            for d in all_days for lo in all_locations) <= 1)
+        n_conditions += 1
 
     # Try to distribute the shifts evenly, so that each librarian works
     # min_shifts_per_librarian shifts. If this is not possible, because the total
@@ -137,7 +139,7 @@ def main():
                     # This doesn't seem to work, librarians are still assigned there.
                     if lo < 3:
                         num_shifts_worked += shifts[(n, d, s, lo)]
-                        if s > 10:
+                        if s == all_shifts[-1]:
                             # Last shift must be counted twice, as it lasts 2 hours
                             num_shifts_worked += shifts[(n, d, s, lo)]
                     else:
@@ -192,7 +194,10 @@ def main():
                     #print(shifts[(n, d, s, lo)])
                     if solver.Value(shifts[(n, d, s, lo)]) == 1:
                         if shift_requests[n][d][s][lo] == 1:
-                            print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
+                            if s < all_shifts[-1]:
+                                print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
+                            else:
+                                print(f'{librarians[n]["name"]} works 2h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (OK with work hours).')
                         else:
                             # print(shift_requests[n][d])
                             print(f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]} (problem with work hours).')
@@ -200,6 +205,8 @@ def main():
         for sector in sector_semester_quotas:
             score = sum([solver.Value(shifts[(n, d, s, lo)]) for n in all_librarians
                         for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
+            score += sum([solver.Value(shifts[(n, d, all_shifts[-1], lo)]) for n in all_librarians
+                        for lo in all_locations if librarians[n]['sector'] == sector])
             
             unique_librarians = 0
             for n in all_librarians:
@@ -213,6 +220,8 @@ def main():
     for n in all_librarians:
         score = sum(solver.Value(shifts[(n, d, s, lo)])
             for d in all_days for s in all_shifts for lo in all_locations if lo < 3)
+        score += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])
+            for d in all_days for lo in all_locations if lo < 3)
         score_reserve = sum(solver.Value(shifts[(n, d, s, lo)])
             for d in all_days for s in all_shifts for lo in all_locations if lo >= 3)
         s1 = f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]}'
