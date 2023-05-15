@@ -126,7 +126,7 @@ def read_work_schedules(xlsx_filename):
                     librarians[n]['type'] = cells[3]
                     librarians[n]['prefered_length'] = cells[9]
                     # TODO replace fixed constants!
-                    new_roster = numpy.zeros(shape=(5, max_shift+1, max_location), dtype=numpy.int8)
+                    new_roster = numpy.zeros(shape=(max_day, max_shift+1, max_location), dtype=numpy.int8)
                     d = -1
                     # Extract extended work hours
                     for x in cells[4:4+max_day]:
