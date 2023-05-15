@@ -279,7 +279,7 @@ def main():
                     if d == meeting_slots['dir'][0] and librarians[n]['type'] == 'dir':
                         if s >= meeting_slots['dir'][1] and s <= meeting_slots['dir'][2]:
                             out_of_time_shifts += shifts[(n, d, s, lo)] * 1
-
+                    
         if rules['noOutOfTimeShift']:        
             model.Add(out_of_time_shifts < 1).OnlyEnforceIf(noOutOfTimeShift)
             n_conditions += 1
@@ -367,29 +367,27 @@ def main():
                     #print(n, d, s, lo)
                     #print(shifts[(n, d, s, lo)])
                     # FIXME don't forget the dir meeting check!!!
-                    # TODO: definitely not valid if we switch to 2h shifts, or 2.5, or 3?
+                    # TESTING: OK with non-1h shifts?
                     if solver.Value(shifts[(n, d, s, lo)]) == 1:
                         if shift_requests[n][d][s][lo] == 1:
+                            hh = desk_shifts[s][0] // 60
+                            mm = '{:0>2}'.format(desk_shifts[s][0] % 60)
+                            length = desk_shifts[s][1] / 60
                             if (not d == meeting_slots[librarians[n]['sector']][0]
                                     or s < meeting_slots[librarians[n]['sector']][1]
                                     or s > meeting_slots[librarians[n]['sector']][2]) and \
                                     (not (d == meeting_slots['dir'][0] and librarians[n]['type'] == 'dir')
                                     or s < meeting_slots['dir'][1]
                                     or s > meeting_slots['dir'][2]):
-                                if s < all_shifts[-1]:
-                                    line = f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).'
-                                    print(line)
-                                    report += line + '<br>\n'
-                                else:
-                                    line = f'{librarians[n]["name"]} works 2h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).'
-                                    print(line)
-                                    report += line + '<br>\n'
+                                line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).'
+                                print(line)
+                                report += line + '<br>\n'
                             else:
-                                line = f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (problem with a group meeting).'
+                                line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (problem with a group meeting).'
                                 print(line)
                                 report += line + '<br>\n'                    
                         else:
-                            line = f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (problem with work hours).'
+                            line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (problem with work hours).'
                             # print(shift_requests[n][d])
                             print(line)
                             report += line + '<br/>\n'
@@ -404,23 +402,25 @@ def main():
             unique_librarians = 0
             am_librarians = 0
             pm_librarians = 0
+            pm = min([x for x in shift_starts if x > 12*60])
+            pm_slot = shift_starts.index(pm)
             for n in all_librarians:
-                worked_today = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts
-                    for lo in all_locations if librarians[n]['sector'] == sector])
+                worked_today = sum([solver.Value(shifts[(n, d, s, lo)]*desk_shifts[s][1]) for s in all_shifts
+                    for lo in all_locations if librarians[n]['sector'] == sector])/60
                 if worked_today > 0:
                     unique_librarians += 1
-                worked_am = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts[0:6]
-                    for lo in all_locations if librarians[n]['sector'] == sector])
+                worked_am = sum([solver.Value(shifts[(n, d, s, lo)]*desk_shifts[s][1]) for s in all_shifts[0:pm_slot]
+                    for lo in all_locations if librarians[n]['sector'] == sector])/60
                 if worked_am > 0:
                     am_librarians += 1
-                worked_pm = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts[6:-1]
-                    for lo in all_locations if librarians[n]['sector'] == sector])
+                worked_pm = sum([solver.Value(shifts[(n, d, s, lo)]*desk_shifts[s][1]) for s in all_shifts[pm_slot:-1]
+                    for lo in all_locations if librarians[n]['sector'] == sector])/60
                 if worked_pm > 0:
                     pm_librarians += 1
             line = f'Daily shifts for {sector.upper()}: {score} (using {unique_librarians} unique librarian(s), minimum {sector_semester_quotas[sector]})'
             print(line)
             report += line + '<br/>\n'
-            line = f'Morning (8h-13): {am_librarians} librarian(s), afternoon (12h-20h): {pm_librarians} librarian(s)'
+            line = f'Morning (8h-12h): {am_librarians} librarian(s), afternoon (after 12h-20h): {pm_librarians} librarian(s)'
             print(line)
             report += line + '<br/>\n'
     print()
@@ -561,13 +561,13 @@ body {
     table += "\n</tr>\n</thead>\n<tbody>"
 
     for s in all_shifts:
-        # TODO: definitely not valid if we switch to 2h shifts, or 2.5, or 3?
         for lo in all_locations:
             table += "<tr>\n"
-            if s < all_shifts[-1]:
-                table += f"<td>{(s+8):02}:00-{(s+9):02}:00 {locations[lo]['name']}</td>"
-            else:
-                table += f"<td>{(s+8):02}:00-{(s+10):02}:00 {locations[lo]['name']}</td>"
+            hh1 = '{:0>2}'.format(desk_shifts[s][0] // 60)
+            mm1 = '{:0>2}'.format(desk_shifts[s][0] % 60)
+            hh2 = '{:0>2}'.format((desk_shifts[s][0] + desk_shifts[s][1]) // 60)
+            mm2 = '{:0>2}'.format((desk_shifts[s][0] + desk_shifts[s][1]) % 60)
+            table += f"<td>{hh1}:{mm1}-{hh2}:{mm2} {locations[lo]['name']}</td>"
             for d in all_days:
                 cell = "<td>N/A</td>"
                 for n in all_librarians:
