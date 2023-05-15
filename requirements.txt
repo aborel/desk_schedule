@@ -8,3 +8,6 @@ numpy
 matplotlib
 openpyxl
 pyinstaller
+lxml
+dateparser
+
