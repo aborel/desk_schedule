@@ -140,9 +140,8 @@ def main():
             # Successive shifts preference?
             for offset in all_shifts[0:-run_length-1]:
                 # the last shift (18h-20h) cannot be combined with another one
-                reduced_shifts = range(num_shifts-offset-1)
+                reduced_shifts = range(num_shifts-run_length-1)
                 print([masks[run_length][s][offset] for s in reduced_shifts])
-                print('one down')
                 #print(reduced_shifts)
                 #print(offset, run_length, n, d)
                 #for s in reduced_shifts:
@@ -154,7 +153,7 @@ def main():
                 # TODO fix  TypeError('Not supported: CpModel.Add(' + str(ct) + ')') DONE?
                 # TODO study more relaxed requirements, INFEASIBLE with current data and code
                 # model.Add(subsequent_shifts == 0 or subsequent_shifts == librarians[n]['prefered_length'])
-                #model.Add(subsequent_shifts == 0 or subsequent_shifts == librarians[n]['prefered_length'])
+                model.Add(subsequent_shifts == librarians[n]['prefered_length'])
                 #n_conditions += 1
 
         # only assign max. one 18-20 shift for a given librarian
