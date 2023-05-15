@@ -212,21 +212,22 @@ def read_work_schedules(xlsx_filename):
 
                                     int_boundaries.append(exact_time)
                                     k += 1
-                                # print('int_boundaries: ', int_boundaries)
+                                #print('int_boundaries: ', int_boundaries)
                                 for slot in range(len(int_boundaries) // 2):
                                     if shifts[0][0] <= int_boundaries[slot*2]:
                                         lower_time = min([x[0] for x in shifts if x[0] >= int_boundaries[slot*2]])
                                     else:
                                         lower_time = shifts[0][0]
                                     lower_slot = [x[0] for x in shifts].index(lower_time)
-                                    if shifts[-1][0] >= int_boundaries[slot*2+1]:
-                                        upper_time = max([x[0] for x in shifts if x[0] <= int_boundaries[slot*2+1]])
-                                    else:
-                                        upper_time = shifts[-1][0]
-                                    # The last completely workable slot will actually be the previous one
+                                    #print(int_boundaries[slot*2+1],  [x[0] for x in shifts])
+                                    upper_time = max([x[0] for x in shifts if x[0] <= int_boundaries[slot*2+1]])
+                                    # the last 100% possible slot is one below
                                     upper_slot = [x[0] for x in shifts].index(upper_time) - 1
+                                    # unless we are beyond the end of the last shiift
+                                    if int_boundaries[slot*2+1] >= shifts[-1][0] + shifts[-1][1]:
+                                        upper_slot += 1
 
-                                    # print(f'lower-upper: {lower_time}-{upper_time}')
+                                    #print(f'lower-upper: {lower_time}-{upper_time}')
                                     print(f'lower-upper: {lower_slot}-{upper_slot}')
                                     k = lower_slot
                                     while k <= upper_slot:
