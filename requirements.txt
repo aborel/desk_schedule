@@ -10,4 +10,5 @@ openpyxl
 pyinstaller
 lxml
 dateparser
-
+pyinstaller
+pyinstaller-hooks-contrib
