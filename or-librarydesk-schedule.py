@@ -54,14 +54,6 @@ sector_holiday_quotas = {
     'spi': 1
 }
 
-weekdays = {0: 'lundi',
-            1: 'mardi',
-            2: 'mercredi',
-            3: 'jeudi',
-            4: 'vendredi'
-            }
-
-
 def main():
     # This program tries to find an optimal assignment of librarians to shifts
     # (10 shifts per day, for 5 days), subject to some constraints (see below).
@@ -77,21 +69,21 @@ def main():
     print(args)
 
     num_shifts = 11
-    num_days = 5
 
     if args.no_file:
         from work_schedule import librarians, shift_requests, meeting_slots
-        from work_schedule import quota, locations, rules
+        from work_schedule import quota, locations, rules, weekdays
     elif args.file is not None:
         from read_work_schedule import read_work_schedules
-        shift_requests, librarians, locations, quota, meeting_slots, rules = read_work_schedules(args.file)
+        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays = read_work_schedules(args.file)
     else:
         from read_work_schedule import read_work_schedules
         filename = 'Horaires-guichets.xlsx'
-        shift_requests, librarians, locations, quota, meeting_slots, rules = read_work_schedules(filename)
+        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays = read_work_schedules(filename)
 
     num_locations = len(locations.keys())
     num_librarians = len(librarians.keys())
+    num_days = len(weekdays.keys())
 
     all_librarians = range(num_librarians)
     all_shifts = range(num_shifts)
@@ -176,8 +168,8 @@ def main():
                 for lo in all_locations:
                     for s in all_shifts[0:-librarians[n]['prefered_length']]:
                         tmp_var1 = model.NewIntVar(-max_shift, max_shift, 'tmp1deltan%dd%dlo%ds%d' % (n, d, lo, s))
-                        #model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1).OnlyEnforceIf(preferedRunLength)
-                        tmp_var2 = model.NewIntVar(0, max_shift, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
+                        model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1)
+                        tmp_var2 = model.NewIntVar(0, max_shift*2, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
                         model.AddAbsEquality(tmp_var2, tmp_var1)
                         delta_vars[n][d].append(tmp_var2)
             model.Add(sum([delta_vars[n][d][s] for s in all_shifts[0:-librarians[n]['prefered_length']]])*librarians[n]['prefered_length'] <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
