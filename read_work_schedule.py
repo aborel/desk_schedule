@@ -9,7 +9,7 @@ import openpyxl
 # TODO replace with values determined by the defined locations
 #max_shift = 10
 # max_location = 5
-max_day = 5
+#max_day = 5
 
 # TODO replace with values extracted from the Excel spreadsheet
 # Sector and direction meetings:
@@ -42,6 +42,24 @@ def read_work_schedules(xlsx_filename):
                 start = int(cells[2].lower().split('h')[0]) - 8
                 end = int(cells[3].lower().split('h')[0]) - 8
                 locations[cells[0]] = {'name': cells[1], 'start': start, 'end': end}
+
+    sheet = wb_obj['jours']
+    weekdays = {}
+    max_day = None
+    for row in sheet.iter_rows():
+        if len(row) > 0:
+            if row[0] is not None:
+                cells = [cell.value for cell in row]
+                if cells[0] is not None:
+                    try:
+                        number = int(cells[0])
+                    except ValueError:
+                        pass
+                    value = cells[1]
+                    weekdays[number] = value
+    max_day = number + 1
+
+    print(weekdays)
 
     sheet = wb_obj['quotas']
     quota = {}
@@ -111,7 +129,7 @@ def read_work_schedules(xlsx_filename):
                     new_roster = numpy.zeros(shape=(5, max_shift+1, max_location), dtype=numpy.int8)
                     d = -1
                     # Extract extended work hours
-                    for x in cells[4:9]:
+                    for x in cells[4:4+max_day]:
                         # new day
                         d += 1
                         if x is None or not x[0].isdigit():
@@ -178,20 +196,7 @@ def read_work_schedules(xlsx_filename):
                     rules[name] = (value > 0)
 
 
-    sheet = wb_obj['jours']
-    weekdays = {}
-    for row in sheet.iter_rows():
-        if len(row) > 0:
-            if row[0] is not None:
-                cells = [cell.value for cell in row]
-                if cells[0] is not None:
-                    try:
-                        number = int(cells[0])
-                    except ValueError:
-                        pass
-                    value = cells[1]
-                    weekdays[number] = value
-
+    
     return availability, librarians, locations, quota, meeting_slots, rules, weekdays
 
 
