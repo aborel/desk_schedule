@@ -103,7 +103,8 @@ def read_work_schedules(xlsx_filename):
                             else:
                                 mm = 0
                             times.append(hh)
-                        print(times, shifts, [x[0] for x in shifts if x[0] <= times[0]])
+                        #print('stuff: ', times, shifts, [x[0] for x in shifts if x[0] <= times[0]])
+                        #print([(x[0], x[0] + x[1], times[1]) for x in shifts ])
                         absolute_times = (max([x[0] for x in shifts if x[0] <= times[0]]),
                             min([x[0] for x in shifts if x[0] + x[1] >= times[1]]))
                     print('times: ', absolute_times)
@@ -119,9 +120,10 @@ def read_work_schedules(xlsx_filename):
             if cells[0] is not None:
                 cells = [cell.value for cell in row]
                 category = cells[0]
-                worked = int(cells[1])
-                reserve = int(cells[2])
-                max_days = int(cells[3])
+                # 2022-05-23 scale up or down if we deal with periods different from 1 business week
+                worked = int(cells[1] * max_day / 5)
+                reserve = int(cells[2] * max_day / 5)
+                max_days = int(cells[3] * max_day / 5)
                 quota[category] = (worked, reserve, max_days)
 
     print(locations)
@@ -154,12 +156,18 @@ def read_work_schedules(xlsx_filename):
                                 minutes = '0'
                             mm = int(minutes)
                             print('meeting: ', hh + mm, [x[0] for x in shifts if x[0] <= hh + mm])
-                            times.append(max([x[0] for x in shifts if x[0] <= hh + mm]))
-                            times.append(min([x[0] for x in shifts if x[0] > hh + mm]))
+                            if len([x[0] for x in shifts if x[0] <= hh + mm]) > 0:
+                                times.append(max([x[0] for x in shifts if x[0] <= hh + mm]))
+                                times.append(min([x[0] for x in shifts if x[0] > hh + mm]))
+                            else:
+                                #print(min(shifts))
+                                times.append(min([x[0] for x in shifts]))
+                                times.append(min([x[0] for x in shifts]))
                             if times[-1] > shifts[-1][0]:
                                 pass
                     print('meeting times:', times)
                     print('meeting shifts:', shifts)
+
                     meeting_slots[group] = (day, [x[0] for x in shifts].index(times[0]), [x[0] for x in shifts].index(times[3]) -1)
 
     sheet = wb_obj['guichetiers']
@@ -239,7 +247,7 @@ def read_work_schedules(xlsx_filename):
                                         upper_slot += 1
 
                                     #print(f'lower-upper: {lower_time}-{upper_time}')
-                                    print(f'lower-upper: {lower_slot}-{upper_slot}')
+                                    print(f'lower-upper: ({lower_slot})-({upper_slot})')
                                     k = lower_slot
                                     while k <= upper_slot:
                                         # print([d, k])
@@ -285,7 +293,7 @@ def check_minima(availabilities, librarians, locations, quota, meeting_slots, ru
             for l in range(max_location):
                 for n in range(len(librarians)):
                     test_roster[d][s][l] += availabilities[n][d][s][l]
-            print(f'd {d} s {s} l {l}')
+            # print(f'd {d} s {s} l {l}')
             if test_roster[d][s][0] < sum([shifts[s][0] - shifts[s][0]  >= locations[l]['times'][d]['start'] \
                 and shifts[-1][0] - shifts[s][0] <= locations[l]['times'][d]['start'] for l in range(max_location)]):
                     hh = '{:0>2}'.format(shifts[s][0]//60)
@@ -320,4 +328,5 @@ if __name__ == '__main__':
         outfile.write(f'\nrules = {str(rules)}\n')
         outfile.write(f'\nweekdays = {str(weekdays)}\n')
         outfile.write(f'\ndesk_shifts = {str(shifts)}\n')
-        outfile.write(f'\nmsg = {msg}\n')
+        msg = msg.replace("\n", "\\n")
+        outfile.write(f'\nmsg = "{msg}"\n')
