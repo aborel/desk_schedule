@@ -15,9 +15,9 @@ def log_error_message(message):
 
 
 def log_message(message):
-    f_err = open(error_file, "a")
-    f_err.write(message + '\n')
-    f_err.close()
+    f_log = open(log_file, "a")
+    f_log.write(message + '\n')
+    f_log.close()
 
 
 def init_error_log():
@@ -44,3 +44,6 @@ def init_main_log():
         os.remove(log_file)
     except OSError:
         pass
+
+    f_log = open(log_file, "w")
+    f_log.close()
