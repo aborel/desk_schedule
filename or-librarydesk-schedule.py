@@ -223,7 +223,7 @@ def main():
         num_shifts_reserve = 0
         out_of_time_shifts = 0
         for d in all_days:
-            run_length = 0
+            # run_length = 0
             for s in all_shifts:
                 for lo in all_locations:
                     if locations[lo]['name'].lower().find('remplacement') < 0:
@@ -288,8 +288,20 @@ def main():
     solution_printer = cp_model.ObjectiveSolutionPrinter()
     status = solver.SolveWithSolutionCallback(model, solution_printer)
 
+
+    # Experimental: exhaustive solution search
+    #solver_multi = cp_model.CpSolver()
+    #array_solution_printer = cp_model.VarArraySolutionPrinter([shifts[(n, d, s, lo)] for lo in all_locations
+    #    for n in all_librarians for s in all_shifts for d in all_days])
+    #solver_multi.parameters.enumerate_all_solutions = True
+    #solutions_array = solver_multi.Solve(model, array_solution_printer)
+    #print('Status = %s' % solver_multi.StatusName(status))
+    #print('Number of solutions found: %i' % array_solution_printer.solution_count())
+
+
     print()
     print('Quality of the solution: definition of constants')
+    print('cp_model.MODEL_INVALID', cp_model.MODEL_INVALID)
     print('cp_model.FEASIBLE', cp_model.FEASIBLE)
     print('cp_model.INFEASIBLE', cp_model.INFEASIBLE)
     print('cp_model.OPTIMAL', cp_model.OPTIMAL)
