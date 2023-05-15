@@ -4,6 +4,7 @@ from ortools.sat.python import cp_model
 import numpy
 from numpy import array
 import itertools
+import argparse
 
 max_shfts_per_day = 2
 
@@ -62,11 +63,28 @@ def main():
     # (10 shifts per day, for 5 days), subject to some constraints (see below).
     # Each librarian can request to be assigned to specific shifts.
     # The optimal assignment maximizes the number of fulfilled shift requests.
+
+    script_description = 'Generate a desk schedule from a file or from the variables in a Python script'
+    parser = argparse.ArgumentParser(description=script_description)
+    parser.add_argument('--no-file', action='store_true', help='do not read from Excel sheet, use work_schedule.py')
+    parser.add_argument('--file', help='read from Excel sheet')
+
+    args = parser.parse_args()
+    print(args)
+
     num_shifts = 11
     num_days = 5
 
-    from work_schedule import librarians, shift_requests, meeting_slots
-    from work_schedule import quota, locations
+    if args.no_file:
+        from work_schedule import librarians, shift_requests, meeting_slots
+        from work_schedule import quota, locations
+    elif args.file is not None:
+        from read_work_schedule import read_work_schedules
+        shift_requests, librarians, locations, quota, meeting_slots = read_work_schedules(args.file)
+    else:
+        from read_work_schedule import read_work_schedules
+        filename = 'Horaires-guichets.xlsx'
+        shift_requests, librarians, locations, quota, meeting_slots = read_work_schedules(filename)
 
     num_locations = len(locations.keys())
     num_librarians = len(librarians.keys())
