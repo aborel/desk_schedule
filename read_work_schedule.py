@@ -160,8 +160,21 @@ def read_work_schedules(xlsx_filename):
             break
     print()
 
+    sheet = wb_obj['règles']
+    rules = {}
+    for row in sheet.iter_rows():
+        if len(row) > 0:
+            if row[0] is not None:
+                cells = [cell.value for cell in row]
+                if cells[0] is not None:
+                    name = cells[0]
+                    try:
+                        value = int(cells[1])
+                    except ValueError:
+                        value = 0
+                    rules[name] = (value > 0)
 
-    return availability, librarians, locations, quota, meeting_slots
+    return availability, librarians, locations, quota, meeting_slots, rules
 
 
 if __name__ == '__main__':
@@ -170,7 +183,7 @@ if __name__ == '__main__':
         print('Le fichier XLSX doit contenir les horaires étendus des collaborateurs')
         exit(1)
     else:
-        availabilities, librarians, locations, quota, meeting_slots = read_work_schedules(sys.argv[1])
+        availabilities, librarians, locations, quota, meeting_slots, rules = read_work_schedules(sys.argv[1])
         outfile = open('work_schedule.py', 'w')
         outfile.write('from numpy import array, int8\n\n')
         outfile.write(f'librarians = {str(librarians)}\n')
@@ -178,3 +191,4 @@ if __name__ == '__main__':
         outfile.write(f'\nmeeting_slots = {str(meeting_slots)}\n')
         outfile.write(f'\nlocations = {str(locations)}\n')
         outfile.write(f'\nquota = {str(quota)}\n')
+        outfile.write(f'\nrules = {str(rules)}\n')
