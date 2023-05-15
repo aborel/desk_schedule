@@ -79,7 +79,7 @@ def main():
         filename = 'Horaires-guichets.xlsx'
         shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(filename)
 
-    num_shifts = len(desk_shifts.keys())
+    num_shifts = len(desk_shifts)
     shift_starts = [x[0] for x in desk_shifts]
     num_locations = len(locations.keys())
     num_librarians = len(librarians.keys())
