@@ -158,7 +158,7 @@ def main():
                         if s >= meeting_slots['dir'][1] and s <= meeting_slots['dir'][2]:
                             out_of_time_shifts += shifts[(n, d, s, lo)] * 1
 
-        model.Add(out_of_time_shifts <= 1)
+        model.Add(out_of_time_shifts < 1)
         n_conditions += 1
         #model.Add(min_shifts_per_librarian <= num_shifts_worked)
         model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - 1)
