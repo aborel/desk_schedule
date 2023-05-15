@@ -257,20 +257,8 @@ def main():
                 for lo in all_locations:
                     if locations[lo]['name'].lower().find('remplacement') < 0:
                         num_hours_worked += shifts[(n, d, s, lo)]*int(desk_shifts[s][1]/60)
-                        # TESTING no longer necessary exception?
-                        """
-                        if s == all_shifts[-1]:
-                            # Last shift must be counted twice, as it lasts 2 hours
-                            num_shifts_worked += shifts[(n, d, s, lo)]
-                        """
                     else:
                         num_hours_reserve += shifts[(n, d, s, lo)]*int(desk_shifts[s][1]/60)
-                                                # TESTING no longer necessary exception?)
-                        """
-                        if s == all_shifts[-1]:
-                            # Last shift must be counted twice, as it lasts 2 hours
-                            num_shifts_reserve += shifts[(n, d, s, lo)]
-                        """
                     out_of_time_shifts += shifts[(n, d, s, lo)] * (1-shift_requests[n][d][s][lo])
                     # Shifts during mandatory meetings also count as out of time
                     if d == meeting_slots[librarians[n]['sector']][0]:
@@ -434,12 +422,8 @@ def main():
         # TESTING updated to non-1h shifts
         score = sum(solver.Value(shifts[(n, d, s, lo)]*desk_shifts[s][1])/60
             for d in all_days for s in all_shifts for lo in all_locations if locations[lo]['name'].lower().find('remplacement') < 0)
-        score += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])*desk_shifts[s][1]/60
-            for d in all_days for lo in all_locations if locations[lo]['name'].lower().find('remplacement') < 0)
         score_reserve = sum(solver.Value(shifts[(n, d, s, lo)]*desk_shifts[s][1])/60
             for d in all_days for s in all_shifts for lo in all_locations if locations[lo]['name'].lower().find('remplacement') >= 0)
-        score_reserve += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])*desk_shifts[s][1]/60
-            for d in all_days for lo in all_locations if locations[lo]['name'].lower().find('remplacement') >= 0)
         score_days = sum([1 for d in all_days if sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts for lo in all_locations]) > 0])
         s1 = f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]}'
         s2 = f' and acting as a reserve for {score_reserve}/{quota[librarians[n]["type"]][1]} hours'
