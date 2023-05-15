@@ -296,7 +296,7 @@ def main():
     if rules['searchForAllSolutions']:
         # Experimental: exhaustive solution search
         solver_multi = cp_model.CpSolver()
-        array_solution_printer = cp_model.VarArraySolutionPrinter([shifts[(n, d, s, lo)] for lo in all_locations
+        array_solution_printer = cp_model.VarArrayAndObjectiveSolutionPrinter([shifts[(n, d, s, lo)] for lo in all_locations
             for n in all_librarians for s in all_shifts for d in all_days])
         solver_multi.parameters.enumerate_all_solutions = True
         solutions_array = solver_multi.Solve(model, array_solution_printer)
@@ -318,7 +318,9 @@ def main():
         print(f"**Solver statistics:**\n{stat_details}")
         for var_index in solver.ResponseProto().sufficient_assumptions_for_infeasibility:
             print(var_index, model.VarIndexToVarProto(var_index)) # prints "v1"
-
+        print('---')
+        print('SufficientAssumptionsForInfeasibility = '
+              f'{solver.SufficientAssumptionsForInfeasibility()}')
         exit(1)
 
     print()
