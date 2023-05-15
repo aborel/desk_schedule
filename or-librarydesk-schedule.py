@@ -563,7 +563,7 @@ body {
     outfile.write(html)
     outfile.close()
 
-    # Statistics.
+    # Statistics
 
     print()
     print('**Statistics:**')
@@ -571,6 +571,7 @@ body {
     print()
     print(f"**Solver statistics:**\n{stat_details}")
 
+    """
     if rules['preferedRunLength']:
         for n in all_librarians:
             if librarians[n]['prefered_length'] > 1:
@@ -580,6 +581,7 @@ body {
                             print('shifts: ', (n, d, s, lo), solver.Value(shifts[(n, d, s, lo)]))
                         print('delta1: ', (n, d, s, lo), solver.Value(delta_vars1[(n, d, s)]))
                         print('delta2: ', (n, d, s, lo), solver.Value(delta_vars2[(n, d, s)]))
+    """
 
 
 if __name__ == '__main__':
