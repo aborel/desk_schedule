@@ -237,7 +237,7 @@ def main():
                     if d == meeting_slots[librarians[n]['sector']][0]:
                         if s >= meeting_slots[librarians[n]['sector']][1] and s <= meeting_slots[librarians[n]['sector']][2]:
                             out_of_time_shifts += shifts[(n, d, s, lo)] * 1
-                    if d == meeting_slots['dir'] and librarians[n]['type'] == 'dir':
+                    if d == meeting_slots['dir'][0] and librarians[n]['type'] == 'dir':
                         if s >= meeting_slots['dir'][1] and s <= meeting_slots['dir'][2]:
                             out_of_time_shifts += shifts[(n, d, s, lo)] * 1
 
@@ -315,7 +315,12 @@ def main():
                     # FIXME don't forget the dir meeting check!!!
                     if solver.Value(shifts[(n, d, s, lo)]) == 1:
                         if shift_requests[n][d][s][lo] == 1:
-                            if not d == meeting_slots[librarians[n]['sector']][0] or s < meeting_slots[librarians[n]['sector']][1] or s > meeting_slots[librarians[n]['sector']][2]:
+                            if (not d == meeting_slots[librarians[n]['sector']][0]
+                                    or s < meeting_slots[librarians[n]['sector']][1]
+                                    or s > meeting_slots[librarians[n]['sector']][2]) and \
+                                    (not (d == meeting_slots['dir'][0] and librarians[n]['type'] == 'dir')
+                                    or s < meeting_slots['dir'][1]
+                                    or s > meeting_slots['dir'][2]):
                                 if s < all_shifts[-1]:
                                     line = f'{librarians[n]["name"]} works 1h at {s+8}:00 on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).'
                                     print(line)
