@@ -28,6 +28,7 @@ meeting_slots = {
 # IDEA 2022-02-25 what if we used non-integer hours? Start at 8:30 for example?
 
 def read_work_schedules(xlsx_filename):
+    print('Input file: ', xlsx_filename)
     wb_obj = openpyxl.load_workbook(xlsx_filename)
 
     sheet = wb_obj['jours']
@@ -101,7 +102,7 @@ def read_work_schedules(xlsx_filename):
                             else:
                                 mm = 0
                             times.append(hh)
-                        print(times, shifts, [x[0] for x in shifts if x[0] <= times[0]])
+                        # print(times, shifts, [x[0] for x in shifts if x[0] <= times[0]])
                         absolute_times = (max([x[0] for x in shifts if x[0] <= times[0]]),
                             min([x[0] for x in shifts if x[0] + x[1] >= times[1]]))
                     print('times: ', absolute_times)
@@ -211,7 +212,7 @@ def read_work_schedules(xlsx_filename):
 
                                     int_boundaries.append(exact_time)
                                     k += 1
-                                print('int_boundaries: ', int_boundaries)
+                                # print('int_boundaries: ', int_boundaries)
                                 for slot in range(len(int_boundaries) // 2):
                                     if shifts[0][0] <= int_boundaries[slot*2]:
                                         lower_time = min([x[0] for x in shifts if x[0] >= int_boundaries[slot*2]])
@@ -225,7 +226,7 @@ def read_work_schedules(xlsx_filename):
                                     # The last completely workable slot will actually be the previous one
                                     upper_slot = [x[0] for x in shifts].index(upper_time) - 1
 
-                                    print(f'lower-upper: {lower_time}-{upper_time}')
+                                    # print(f'lower-upper: {lower_time}-{upper_time}')
                                     print(f'lower-upper: {lower_slot}-{upper_slot}')
                                     k = lower_slot
                                     while k <= upper_slot:
