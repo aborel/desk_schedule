@@ -143,8 +143,8 @@ def read_work_schedules(xlsx_filename):
                                     k += 1
                                 print(int_boundaries)
                                 for slot in range(len(int_boundaries) // 2):
-                                    k = int_boundaries[slot]
-                                    while k <= int_boundaries[slot+1]:
+                                    k = int_boundaries[slot*2]
+                                    while k <= int_boundaries[slot*2+1]:
                                         # 10 regular shifts (8-17h) and 1 2-hour shift at 18:00, only 1 location
                                         if k < max_shift:
                                             for lo in range(max_location):
