@@ -188,7 +188,7 @@ def read_work_schedules(xlsx_filename):
                         else:
                             if not x[-1].isdigit():
                                 x += '00'
-                            x = x.lower().replace('/', '-').replace("–", "-")
+                            x = x.lower().replace('/', '-').replace("–", "-").replace(';','-')
                             x = x.replace('.', 'h').replace(':', 'h').replace('hh', 'h').replace('h-', 'h00-')
                             boundaries = x.split('-')
                             if len(boundaries) < 2:
@@ -222,7 +222,8 @@ def read_work_schedules(xlsx_filename):
                                         upper_time = max([x[0] for x in shifts if x[0] <= int_boundaries[slot*2+1]])
                                     else:
                                         upper_time = shifts[-1][0]
-                                    upper_slot = [x[0] for x in shifts].index(upper_time)
+                                    # The last completely workable slot will actually be the previous one
+                                    upper_slot = [x[0] for x in shifts].index(upper_time) - 1
 
                                     print(f'lower-upper: {lower_time}-{upper_time}')
                                     print(f'lower-upper: {lower_slot}-{upper_slot}')
