@@ -1,11 +1,10 @@
-import re
 import sys
 
 from bs4 import BeautifulSoup
 import dateparser
 
 # From https://absences.epfl.ch/cgi-bin/abs/lang=en/menu=plannings/listAbs?week=1
-# or https://absences.epfl.ch/cgi-bin/abs/lang=en/instID=1459/menu=plannings/listAbs?date=20230227&week=1
+
 
 def get_all_text(node):
     if node.nodeType == node.TEXT_NODE:
@@ -39,13 +38,13 @@ def parse_absences(htmlfile):
             subtables = t.find_all('table')
             rows = t.find_all('tr')
             print(f'Table {idx} has {len(rows)} rows and contains {len(subtables)} sub-tables')
-            print('Is FV in there?', t.decode_contents().find('Varrato'))
-            print('Is Holidays in there?', t.decode_contents().find('Holidays'))
+            print('Is FV there?', t.decode_contents().find('Varrato'))
+            print('Is Holidays there?', t.decode_contents().find('Holidays'))
             for ridx, r in enumerate(rows):
                 cols = r.find_all('td')
                 if len(cols) == 1:
-                    if  get_all_text(cols[0]) is None:
-                        print(f'Weird column:')
+                    if get_all_text(cols[0]) is None:
+                        print('Weird column:')
                     else:
                         pass
                 else:
@@ -57,17 +56,12 @@ def parse_absences(htmlfile):
                 if 'min-width' in styles:
                     total_width = styles['min-width']
                     print('Total absence table width', total_width)
-            
 
         print('---------')
         people_table = tables[3]
         print('Is FV really in there?', people_table.decode_contents().find('Varrato'))
         people_rows = people_table.find_all('tr')
         librarians = [get_all_text(row).strip() for row in people_rows]
-        for row in people_rows:
-            cols = row.find_all('td')
-            #print()
-            #print('---')
 
         fcDayThs = [th for th in S.find_all('th', class_='fc-day') if th.get('colspan') == '1']
         for th in fcDayThs:
@@ -89,8 +83,6 @@ def parse_absences(htmlfile):
                 day_width = int(total_width.replace('px', '')) // len(fcDayTds)
                 print(f'One day should be {day_width} pixels')
 
-        #print(absence_table.decode_contents().find('Borel'))
-        #print(absence_table.decode_contents().find('Varrato'))
         absence_rows = absence_table.find_all('tr')
         for ridx, row in enumerate(absence_rows):
             cells = row.find_all('td')
@@ -107,7 +99,7 @@ def parse_absences(htmlfile):
                     event_style_list = [x.strip() for x in event.get('style').split(';') if x.find(':') > 0]
                     styles = {k.split(':')[0].strip(): k.split(':')[1].strip() for k in event_style_list}
                     start = int(styles['left'].replace('px', '')) // day_width
-                    end = abs(int(styles['right'].replace('px', ''))) // day_width -1
+                    end = abs(int(styles['right'].replace('px', ''))) // day_width - 1
                     print(f'{librarians[ridx]} is off due to {get_all_text(event).strip()} from {known_days[start]} to {known_days[end]}')
 
     except IndexError as e:
