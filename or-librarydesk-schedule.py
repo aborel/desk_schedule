@@ -275,8 +275,7 @@ def main():
                 for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
 
             #model.Add(sector_score[d][sector] <= sector_semester_quotas[sector])
-    
-    
+               
 
     # pylint: disable=g-complex-comprehension
     model.Maximize(
@@ -289,14 +288,15 @@ def main():
     status = solver.SolveWithSolutionCallback(model, solution_printer)
 
 
-    # Experimental: exhaustive solution search
-    #solver_multi = cp_model.CpSolver()
-    #array_solution_printer = cp_model.VarArraySolutionPrinter([shifts[(n, d, s, lo)] for lo in all_locations
-    #    for n in all_librarians for s in all_shifts for d in all_days])
-    #solver_multi.parameters.enumerate_all_solutions = True
-    #solutions_array = solver_multi.Solve(model, array_solution_printer)
-    #print('Status = %s' % solver_multi.StatusName(status))
-    #print('Number of solutions found: %i' % array_solution_printer.solution_count())
+    if rules['searchForAllSolutions']:
+        # Experimental: exhaustive solution search
+        solver_multi = cp_model.CpSolver()
+        array_solution_printer = cp_model.VarArraySolutionPrinter([shifts[(n, d, s, lo)] for lo in all_locations
+            for n in all_librarians for s in all_shifts for d in all_days])
+        solver_multi.parameters.enumerate_all_solutions = True
+        solutions_array = solver_multi.Solve(model, array_solution_printer)
+        print('Status = %s' % solver_multi.StatusName(status))
+        print('Number of solutions found: %i' % array_solution_printer.solution_count())
 
 
     print()
