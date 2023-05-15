@@ -245,6 +245,13 @@ def main():
     print('cp_model.OPTIMAL', cp_model.OPTIMAL)
     print('-\nSolved? ', status, solver.StatusName())
     
+    if status == cp_model.INFEASIBLE:
+        print('Damn. Wish I knew why.')
+        stat_details = f'{solver.ResponseStats()}'
+        print(f"**Solver statistics:**\n{stat_details}")
+
+        exit(1)
+
     print()
 
     report = ''
