@@ -50,6 +50,14 @@ def parse_absences(htmlfile):
                         pass
                 else:
                     print(f'\tRow {ridx} has {len(cols)} columns')
+            if 'fc-scrollgrid-sync-table' in t.get('class'):
+                print([x.strip() for x in t.get('style').split(';') if x.find(':') > 0])
+                styles = {k.split(':')[0].strip(): k.split(':')[1].strip() for k in [x.strip() for x in t.get('style').split(';') if x.find(':') > 0]}
+                print(styles)
+                if 'min-width' in styles:
+                    total_width = styles['min-width']
+                    print('Total absence table width', total_width)
+            
 
         print('---------')
         people_table = tables[3]
@@ -69,6 +77,16 @@ def parse_absences(htmlfile):
         fcDayTds = S.find_all('td', class_='fc-day')
 
         absence_table = tables[5]
+        
+        if 'fc-scrollgrid-sync-table' in absence_table.get('class'):
+            style_list = [x.strip() for x in absence_table.get('style').split(';') if x.find(':') > 0]
+            styles = {k.split(':')[0].strip(): k.split(':')[1].strip() for k in style_list}
+            print(styles)
+            if 'min-width' in styles:
+                total_width = styles['min-width']
+                print('Total absence table width', int(total_width.replace('px', '')))
+                day_width = int(total_width.replace('px', '')) // len(fcDayTds)
+                print(f'One day should be {day_width} pixels')
 
         #print(absence_table.decode_contents().find('Borel'))
         #print(absence_table.decode_contents().find('Varrato'))
