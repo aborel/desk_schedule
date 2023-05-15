@@ -103,6 +103,7 @@ def read_work_schedules(xlsx_filename):
                     librarians[n] = {'name': name}
                     librarians[n]['sector'] = cells[2]
                     librarians[n]['type'] = cells[3]
+                    librarians[n]['prefered_length'] = cells[9]
                     new_roster = numpy.zeros(shape=(5, max_shift+1, 5), dtype=numpy.int8)
                     d = -1
                     # Extract extended work hours
