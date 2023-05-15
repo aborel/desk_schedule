@@ -152,29 +152,34 @@ def main():
                 n_conditions += 1
         model.Proto().assumptions.append(maxTwoShiftsPerDay.Index())
 
+    delta_vars1 = {}
+    delta_vars2 = {}
+    for n in all_librarians:
+        if librarians[n]['prefered_length'] > 1:
+            for d in all_days:
+                for s in all_shifts[0:-1]:
+                    delta_vars1[(n, d, s)] = \
+                        model.NewIntVar(-1, 1, 'tmp1deltan%id%is%i' % (n, d, s))
+                    delta_vars2[(n, d, s)] = \
+                        model.NewIntVar(0, 1, 'tmp2deltan%id%is%i' % (n, d, s)) 
     if rules['preferedRunLength']:        
         # FIXME: 2 SUCCESSIVE shifts if requested
         # NOTE: current version seems to favor same-day shifts but not successive?
-        delta_vars = []
         preferedRunLength = model.NewBoolVar('preferedRunLength')
         for n in all_librarians:
-            delta_vars.append([])            
-            for d in all_days: 
-                # Successive shifts preference?
-                # The number of changes from "busy" to "free" or back describes
-                # the number of discontinuous shifts
-                # somthing like sum(abs(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]))
-                delta_vars[n].append([])
-                for lo in all_locations:
+            if librarians[n]['prefered_length'] > 1: 
+                for d in all_days:
+                    # Successive shifts preference?
+                    # The number of changes from "busy" to "free" or back describes
+                    # the number of discontinuous shifts
+                    # somthing like sum(abs(shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]))
                     for s in all_shifts[0:-1]:
-                        tmp_var1 = model.NewIntVar(-max_shift, max_shift, 'tmp1deltan%dd%dlo%ds%d' % (n, d, lo, s))
-                        model.Add((shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]) == tmp_var1)
-                        tmp_var2 = model.NewIntVar(0, max_shift*2, 'tmp2deltan%dd%dlo%ds%d' % (n, d, lo, s))
-                        model.AddAbsEquality(tmp_var2, tmp_var1)
-                        delta_vars[n][d].append(tmp_var2)
-                model.Add(sum([delta_vars[n][d][s] for s in all_shifts[0:-1]])*librarians[n]['prefered_length'] <= sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
-                    for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
-                n_conditions += 1
+                        model.Add(sum([shifts[(n, d, s+1, lo)]-shifts[(n, d, s, lo)]
+                            for lo in all_locations]) == delta_vars1[(n, d, s)])
+                        model.AddAbsEquality(delta_vars2[(n, d, s)], delta_vars1[(n, d, s)])
+                    model.Add(sum([delta_vars2[(n, d, s)] for s in all_shifts[0:-1]])*librarians[n]['prefered_length'] <= 2*sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)]
+                        for lo in all_locations for s in all_shifts])).OnlyEnforceIf(preferedRunLength)
+                    n_conditions += 1
 
         model.Proto().assumptions.append(preferedRunLength.Index())
         
@@ -562,6 +567,16 @@ body {
     print(f' - {score}')
     print()
     print(f"**Solver statistics:**\n{stat_details}")
+
+    if rules['preferedRunLength']:
+        for n in all_librarians:
+            if librarians[n]['prefered_length'] > 1:
+                for d in all_days:
+                    for s in all_shifts[0:-1]:
+                        for lo in all_locations:
+                            print('shifts: ', (n, d, s, lo), solver.Value(shifts[(n, d, s, lo)]))
+                        print('delta1: ', (n, d, s, lo), solver.Value(delta_vars1[(n, d, s)]))
+                        print('delta2: ', (n, d, s, lo), solver.Value(delta_vars2[(n, d, s)]))
 
 
 if __name__ == '__main__':
