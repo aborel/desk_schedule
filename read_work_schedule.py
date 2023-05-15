@@ -279,7 +279,7 @@ def check_minima(availabilities, librarians, locations, quota, meeting_slots, ru
                         test_roster[d][s][l] += availabilities[n][d][s][l]
             if test_roster[d][s][0] < sum([shifts[s][0] - shifts[s][0]  >= locations[l]['times'][d]['start'] \
                 and shifts[-1][0] - shifts[s][0] <= locations[l]['times'][d]['start'] for l in range(max_location)]):
-                msg += f'Warning: not enough people to fill the {weekdays[d]} {shifts[s][0]/60}h slot\n'
+                msg += f'Warning: not enough people to fill the {weekdays[d]} {shifts[s][0]/60}h slot<br/>\n'
 
     for d in range(max_day):
         print(weekdays[d])
@@ -309,3 +309,4 @@ if __name__ == '__main__':
         outfile.write(f'\nrules = {str(rules)}\n')
         outfile.write(f'\nweekdays = {str(weekdays)}\n')
         outfile.write(f'\ndesk_shifts = {str(shifts)}\n')
+        outfile.write(f'\nmsg = {msg}\n')

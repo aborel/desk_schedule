@@ -70,14 +70,18 @@ def main():
 
     if args.no_file:
         from work_schedule import librarians, shift_requests, meeting_slots
-        from work_schedule import quota, locations, rules, weekdays, desk_shifts
+        from work_schedule import quota, locations, rules, weekdays, desk_shifts, msg
     elif args.file is not None:
-        from read_work_schedule import read_work_schedules
+        from read_work_schedule import read_work_schedules, check_minima
         shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(args.file)
+        msg = check_minima(shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts)
     else:
-        from read_work_schedule import read_work_schedules
+        from read_work_schedule import read_work_schedules, check_minima
         filename = 'Horaires-guichets.xlsx'
         shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(filename)
+        msg = check_minima(shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts)
+
+    diagnostics = msg
 
     num_shifts = len(desk_shifts)
     shift_starts = [x[0] for x in desk_shifts]
@@ -300,7 +304,6 @@ def main():
 
             #model.Add(sector_score[d][sector] <= sector_semester_quotas[sector])
 
-
     # pylint: disable=g-complex-comprehension
     model.Maximize(
         sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)] for n in all_librarians
@@ -310,7 +313,6 @@ def main():
     #status = solver.Solve(model)
     solution_printer = cp_model.ObjectiveSolutionPrinter()
     status = solver.SolveWithSolutionCallback(model, solution_printer)
-
 
     if rules['searchForAllSolutions']:
         # Experimental: exhaustive solution search
@@ -342,9 +344,10 @@ def main():
               f'{solver.SufficientAssumptionsForInfeasibility()}')
         exit(1)
 
+    print(diagnostics)
     print()
 
-    report = ''
+    report = diagnostics
     for d in all_days:
         line = f'Day {d}'
         print(line)
