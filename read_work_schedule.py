@@ -249,4 +249,4 @@ if __name__ == '__main__':
         outfile.write(f'\nquota = {str(quota)}\n')
         outfile.write(f'\nrules = {str(rules)}\n')
         outfile.write(f'\nweekdays = {str(weekdays)}\n')
-        outfile.write(f'\nshifts = {str(shifts)}\n')
+        outfile.write(f'\ndesk_shifts = {str(shifts)}\n')
