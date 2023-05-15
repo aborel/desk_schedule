@@ -233,12 +233,8 @@ def read_work_schedules(xlsx_filename):
                                     k = lower_slot
                                     while k <= upper_slot:
                                         # print([d, k])
-                                        if k < max_shift - 1:
-                                            for lo in range(max_location):
-                                                new_roster[d][k][lo] = 1
-                                        if k == (max_shift - 1) and d == (max_day-1):
-                                            new_roster[d][k][0] = 1
-
+                                        for lo in range(max_location):
+                                            new_roster[d][k][lo] = 1
                                         k += 1
             
                     availability.append(new_roster)
