@@ -3,6 +3,7 @@ import numpy
 import dateutil.parser
 import openpyxl
 
+# TODO replace with values determined by the defined seats
 max_shift = 10
 max_location = 5
 max_day = 5
@@ -21,7 +22,7 @@ meeting_slots = {
 
 def read_work_schedules(xlsx_filename):
     wb_obj = openpyxl.load_workbook(xlsx_filename)
-    sheet = wb_obj.active
+    sheet = wb_obj['guichetiers']
     n = -1
     availability = []
     librarians = {}
@@ -93,7 +94,23 @@ def read_work_schedules(xlsx_filename):
         else:
             break
     print()
-    return availability, librarians
+    # Switch to 2nd sheet
+    sheet = wb_obj['guichets']
+    seats = {}
+    for row in sheet.iter_rows():
+        if len(row) > 0:
+            cells = [cell.value for cell in row]
+            print(cells)
+            if cells[0] is not None:
+                cells = [cell.value for cell in row]
+                name = cells[1]
+                start = int(cells[2].lower().split('h')[0]) - 8
+                end = int(cells[3].lower().split('h')[0]) - 8
+
+                seats[cells[0]] = {'name': cells[1], 'start': start, 'end': end}
+
+
+    return availability, librarians, seats
 
 
 if __name__ == '__main__':
@@ -102,9 +119,10 @@ if __name__ == '__main__':
         print('Le fichier XLSX doit contenir les horaires étendus des collaborateurs')
         exit(1)
     else:
-        availabilities, librarians = read_work_schedules(sys.argv[1])
+        availabilities, librarians, seats = read_work_schedules(sys.argv[1])
         outfile = open('work_schedule.py', 'w')
         outfile.write('from numpy import array, int8\n\n')
         outfile.write(f'librarians = {str(librarians)}\n')
         outfile.write(f'shift_requests = {str(availabilities)}\n')
         outfile.write(f'\nmeeting_slots = {str(meeting_slots)}\n')
+        outfile.write(f'\nseats = {str(seats)}\n')
