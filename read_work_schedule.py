@@ -260,6 +260,37 @@ def read_work_schedules(xlsx_filename):
     return availability, librarians, locations, quota, meeting_slots, rules, weekdays, shifts
 
 
+def check_minima(availabilities, librarians, locations, quota, meeting_slots, rules, weekdays, shifts):
+    """
+    Perform some minimal checks: are there slots where we just don't have any available people to begwin with?
+    """
+    max_shift = len(shifts)
+    max_location = len(locations)
+    max_day = len(weekdays)
+    test_roster = numpy.zeros(shape=(max_day, max_shift, max_location), dtype=numpy.int8)
+    minimal_roster = numpy.zeros(shape=(max_day, max_shift, max_location), dtype=numpy.int8)
+
+    msg = ''
+    for d in range(max_day):
+        for s in range(max_shift):
+            if not s == max_day and not s == max_shift:
+                for l in range(max_location):
+                    for n in range(len(librarians)):
+                        test_roster[d][s][l] += availabilities[n][d][s][l]
+            if test_roster[d][s][0] < sum([shifts[s][0] - shifts[s][0]  >= locations[l]['times'][d]['start'] \
+                and shifts[-1][0] - shifts[s][0] <= locations[l]['times'][d]['start'] for l in range(max_location)]):
+                msg += f'Warning: not enough people to fill the {weekdays[d]} {shifts[s][0]/60}h slot\n'
+
+    for d in range(max_day):
+        print(weekdays[d])
+        for s in range(max_shift):
+            print([test_roster[d][s][l] for l in range(max_location)])
+
+    print(msg)
+
+    return msg
+
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print(f'Syntaxe: {sys.argv[0]} <XLSX filename>')
@@ -267,6 +298,7 @@ if __name__ == '__main__':
         exit(1)
     else:
         availabilities, librarians, locations, quota, meeting_slots, rules, weekdays, shifts = read_work_schedules(sys.argv[1])
+        msg = check_minima(availabilities, librarians, locations, quota, meeting_slots, rules, weekdays, shifts)
         outfile = open('work_schedule.py', 'w')
         outfile.write('from numpy import array, int8\n\n')
         outfile.write(f'librarians = {str(librarians)}\n')
