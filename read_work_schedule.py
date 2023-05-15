@@ -18,11 +18,13 @@ def read_work_schedules(xlsx_filename):
                     name = ' '.join((cells[1], cells[0]))
                     print(name)
                     n += 1
-                    librarians[n] = name
+                    librarians[n] = {'name': name}
+                    librarians[n]['sector'] = cells[2]
+                    librarians[n]['type'] = cells[3]
                     new_roster = numpy.zeros(shape=(5, 10, 3), dtype=numpy.int8)
                     d = -1
                     # Extract extended work hours
-                    for x in cells[2:7]:
+                    for x in cells[4:9]:
                         # new day
                         d += 1
                         if x is None or not x[0].isdigit():
