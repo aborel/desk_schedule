@@ -3,10 +3,13 @@
 from ortools.sat.python import cp_model
 import numpy
 from numpy import array
+import itertools
+
+max_shfts_per_day = 2
 
 # based on K_Guichets//K2_Guichets_physiques/K2.03_Tournus/quotas_par_guichetier_20190131.JPG
 # TODO: ask for the rule for bl+coordinator
-# TODO: replace with values extracted from the Excel spreadsheet
+# Sample quota object; actual values extracted from the Excel spreadsheet
 """
 quota = {
     '40': (3, 2),
@@ -45,18 +48,6 @@ sector_holiday_quotas = {
     'cado': 3,
     'spi': 1
 }
-
-
-# TODO: replace with values extracted from the Excel spreadsheet
-"""
-locations = {
-    0: 'Accueil 1',
-    1: 'Accueil 2',
-    2: 'STM',
-    3: 'Remplacement accueil',
-    4: 'Remplacement STM'
-}
-"""
 
 weekdays = {0: 'Monday',
     1: 'Tuesday',
@@ -112,14 +103,34 @@ def main():
                 else:
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 1)
                     n_conditions += 1 
+    # WIP : each librarian is using at most 1 seat at a time!
+    for d in all_days:
+        for s in all_shifts:
+            for n in all_librarians:
+                model.Add(sum(shifts[(n, d, s, lo)] for lo in all_locations) <= 1)
+                n_conditions += 1 
 
-    # Each librarian works at most 3 shift per day.
-    # TODO: make that 2 SUCCESSIVE shifts
+    # Each librarian works at most max_shifts_per_day=2 shift per day.
+    # TODO: make that 2 SUCCESSIVE shifts if requested
+    # TODO: mix Accueil and STM shifts over the week
     for n in all_librarians:
         for d in all_days:
             model.Add(sum(shifts[(n, d, s, lo)]
-                for s in all_shifts for lo in all_locations) <= 3)
+                for s in all_shifts for lo in all_locations) <= max_shfts_per_day)
             n_conditions += 1
+            successive_shifts = 0
+            # Successive shifts preference applicable until 17h only
+            """
+            reduced_shifts = [sum([shifts[(n, d, s, lo)] for lo in all_locations]) for s in all_shifts[0:-2]]
+            shift_groups = []
+            for key, iter in itertools.groupby(reduced_shifts):
+                shift_groups.append((key, len(list(iter))))
+            print(shift_groups)
+            for shift_group in shift_groups:
+                model.Add(shift_group[0] == 1 and shift_group[1] == librarians[n]['prefered_length'])
+                n_conditions += 1
+            """
+
         # only assign max. one 18-20 shift for a given librarian
         s = all_shifts[-1]
         model.Add(sum(shifts[(n, d, s, lo)]
@@ -247,9 +258,14 @@ def main():
 
     # Prepare HTML output
 
-    main_title = "Proposed desk schedule</title>"
+    main_title = "Proposed desk schedule"
     
-    header = f"<title>{main_title}</head>\n"
+    datatables_script = """<script type="text/javascript"
+              src="https://code.jquery.com/jquery-3.3.1.min.js"
+              crossorigin="anonymous"></script>\n"""
+    datatables_script += '<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.20/datatables.js"></script>'
+    
+    header = f"<head><title>{main_title}</title>\n{datatables_script}\n"
 
     header += """<style>
 
@@ -278,20 +294,21 @@ body {
   background-color: #04AA6D;
   color: white;
 }
-</style>"""
+</style></head>"""
 
     title = f"<h1>{main_title}</h1>"
 
     score = f"Solution score = {solver.ObjectiveValue()} (max possible result {n_conditions})"
     stat_details = f'{solver.ResponseStats()}'
 
-    table = '<div><table id="schedule">\n'
+    table = '<div><table id="schedule" class="table">\n'
+    table += '<thead>'
     table += "<tr>\n"
-    table += "<th>Time</th>"
+    table += '<th scope="col">Time</th>'
     for d in all_days:
-        table += f"<th>{weekdays[d]}</th>"
+        table += f'<th scope="col">{weekdays[d]}</th>'
 
-    table += "\n</tr>"
+    table += "\n</tr>\n</thead>\n<tbody>"
 
     for s in all_shifts:
         for lo in all_locations:
@@ -308,9 +325,18 @@ body {
             table += "\n</tr>\n"
 
 
-    table +=  "</table></div>"
+    table +=  "</tbody></table></div>"
 
-    body = f"<body>\n{title}\n<div>{score}</div><pre><code>"
+    datatables_init = """
+    <script>
+    $(document).ready(function() {
+        $('#schedule').DataTable({
+    "paging": false
+});
+    });
+  </script>
+    """
+    body = f"<body>\n{title}\n{datatables_init}\n<div>{score}</div><pre><code>"
     body += f"<h2>Technical statistics:</h2>\n{stat_details}</code></pre>"
     body += f"\n{table}</body>"
 
