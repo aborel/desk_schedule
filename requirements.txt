@@ -6,3 +6,4 @@ docplex
 numpy
 matplotlib
 openpyxl
+pyinstaller
