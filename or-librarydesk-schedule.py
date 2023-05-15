@@ -174,9 +174,8 @@ def main():
         minOneShiftAverage = model.NewBoolVar('minOneShifAtverage')
         for n in all_librarians:
             if quota[librarians[n]['type']][0] > 0:
-                for d in all_days:
                     model.Add(sum([shifts[(n, d, s, lo)]
-                        for s in all_shifts for lo in all_locations]) >= min_average_shifts)
+                        for s in all_shifts for lo in all_locations for d in all_days]) >= min_average_shifts)
                     n_conditions += 1
             else:
                 print(librarians[n]['name'], ' is exempted from minimum av. shifts')
@@ -416,10 +415,10 @@ def main():
 
         for sector in sector_semester_quotas:
             # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
-            score = sum([solver.Value(shifts[(n, d, s, lo)]) for n in all_librarians
+            score = sum([solver.Value(shifts[(n, d, s, lo)]*desk_shifts[s][1])/60 for n in all_librarians
                         for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
-            score += sum([solver.Value(shifts[(n, d, all_shifts[-1], lo)]) for n in all_librarians
-                        for lo in all_locations if librarians[n]['sector'] == sector])
+            #score += sum([solver.Value(shifts[(n, d, all_shifts[-1], lo)]) for n in all_librarians
+            #            for lo in all_locations if librarians[n]['sector'] == sector])
             
             unique_librarians = 0
             am_librarians = 0
@@ -462,6 +461,8 @@ def main():
         s2 = f' and acting as a reserve for {score_reserve}/{quota[librarians[n]["type"]][1]} hours'
         s3 = f', with {score_days} days on duty'
         line = s1 + s2 + s3
+        x = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts for lo in all_locations for d in all_days])
+        line += f'\n<br/>{x} shifts?\n'
         print(line)
         report += line + '<br/>\n'
 
