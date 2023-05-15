@@ -256,7 +256,7 @@ def main():
             for s in all_shifts:
                 for lo in all_locations:
                     if locations[lo]['name'].lower().find('remplacement') < 0:
-                        num_hours_worked += shifts[(n, d, s, lo)]*desk_shifts[s][1]
+                        num_hours_worked += shifts[(n, d, s, lo)]*int(desk_shifts[s][1]/60)
                         # TESTING no longer necessary exception?
                         """
                         if s == all_shifts[-1]:
@@ -264,8 +264,8 @@ def main():
                             num_shifts_worked += shifts[(n, d, s, lo)]
                         """
                     else:
-                        num_hours_reserve += shifts[(n, d, s, lo)]*desk_shifts[s][1]
-                        # TESTING no longer necessary exception?
+                        num_hours_reserve += shifts[(n, d, s, lo)]*int(desk_shifts[s][1]/60)
+                                                # TESTING no longer necessary exception?)
                         """
                         if s == all_shifts[-1]:
                             # Last shift must be counted twice, as it lasts 2 hours
@@ -384,13 +384,14 @@ def main():
                                 report += line + '<br>\n'
                             else:
                                 line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (problem with a group meeting).'
-                                print(line)
+                                print(line, d, s, meeting_slots[librarians[n]['sector']])
                                 report += line + '<br>\n'                    
                         else:
                             line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (problem with work hours).'
                             # print(shift_requests[n][d])
                             print(line)
                             report += line + '<br/>\n'
+
 
         for sector in sector_semester_quotas:
             # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
@@ -430,22 +431,31 @@ def main():
     print(line)
     report += '<br/>\n' + line + '<br/>\n'
     for n in all_librarians:
-        # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
-        score = sum(solver.Value(shifts[(n, d, s, lo)])
+        # TESTING updated to non-1h shifts
+        score = sum(solver.Value(shifts[(n, d, s, lo)]*desk_shifts[s][1])/60
             for d in all_days for s in all_shifts for lo in all_locations if locations[lo]['name'].lower().find('remplacement') < 0)
-        score += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])
+        score += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])*desk_shifts[s][1]/60
             for d in all_days for lo in all_locations if locations[lo]['name'].lower().find('remplacement') < 0)
-        score_reserve = sum(solver.Value(shifts[(n, d, s, lo)])
+        score_reserve = sum(solver.Value(shifts[(n, d, s, lo)]*desk_shifts[s][1])/60
             for d in all_days for s in all_shifts for lo in all_locations if locations[lo]['name'].lower().find('remplacement') >= 0)
-        score_reserve += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])
+        score_reserve += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])*desk_shifts[s][1]/60
             for d in all_days for lo in all_locations if locations[lo]['name'].lower().find('remplacement') >= 0)
         score_days = sum([1 for d in all_days if sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts for lo in all_locations]) > 0])
         s1 = f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]}'
-        s2 = f' and acting as a reserve for {score_reserve}/{quota[librarians[n]["type"]][1]} shifts'
+        s2 = f' and acting as a reserve for {score_reserve}/{quota[librarians[n]["type"]][1]} hours'
         s3 = f', with {score_days} days on duty'
         line = s1 + s2 + s3
         print(line)
         report += line + '<br/>\n'
+
+        print(librarians[n]['name'])
+        for d in all_days:
+            print(weekdays[d])
+            print('availability:')
+            print(shift_requests[n][d])
+            print('assigned:')
+            for s in all_shifts:
+                print([solver.Value(shifts[(n, d, s, lo)]) for lo in all_locations] )
 
     # Prepare HTML output
 
@@ -508,7 +518,6 @@ body {
     for d in all_days:
         for s in all_shifts:
             for lo in all_locations:
-                # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
                 if s < locations[lo]['times'][d]['start'] or s > locations[lo]['times'][d]['end']:
                     pass
                 elif s == all_shifts[-1] and (d == all_days[-1]):
@@ -527,10 +536,11 @@ body {
     guichetbiblio_table += '<th scope="col">Poste</th>'
     for s in all_shifts:
         # TODO: definitely not valid if we switch to 2h shifts, or 2.5, or 3?
-        if s < all_shifts[-1]:
-            guichetbiblio_table += f'<th scope="col">{(s+8):02}:00-{(s+9):02}:00</th>'
-        else:
-            guichetbiblio_table += f'<th scope="col">{(s+8):02}:00-{(s+10):02}:00</th>'
+        hh1 = '{:0>2}'.format(desk_shifts[s][0] // 60)
+        mm1 = '{:0>2}'.format(desk_shifts[s][0] % 60)
+        hh2 = '{:0>2}'.format((desk_shifts[s][0] + desk_shifts[s][1]) // 60)
+        mm2 = '{:0>2}'.format((desk_shifts[s][0] + desk_shifts[s][1]) % 60)
+        guichetbiblio_table += f'<th scope="col">{hh1}:{mm1}-{hh2}:{mm2}</th>'
     guichetbiblio_table += "\n</tr>\n</thead>\n<tbody>"
     for d in all_days:
         for lo in all_locations:
