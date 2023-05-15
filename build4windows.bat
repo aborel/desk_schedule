@@ -1,0 +1,1 @@
+pyinstaller -y -w --name desk_schedule -F --distpath ./dist/windows main-windows.spec
