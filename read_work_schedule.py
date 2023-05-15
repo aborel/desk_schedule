@@ -8,16 +8,19 @@ import openpyxl
 # max_location = 5
 max_day = 5
 
+# TODO replace with values extracted from the Excel spreadsheet
 # Sector and direction meetings:
 # - day (0 = Monday)
 # - start slot (0 = 8:00)
 # - end slot (0 = 8:00)
+"""
 meeting_slots = {
     'dir': (3, 0, 5),
     'spi': (1, 5, 6),
     'cado': (1, 1, 2),
     'search': (1, 3, 4)
 }
+"""
 
 
 def read_work_schedules(xlsx_filename):
@@ -37,10 +40,53 @@ def read_work_schedules(xlsx_filename):
                 end = int(cells[3].lower().split('h')[0]) - 8
                 locations[cells[0]] = {'name': cells[1], 'start': start, 'end': end}
 
+    sheet = wb_obj['quotas']
+    quota = {}
+    for row in sheet.iter_rows():
+        if len(row) > 0:
+            cells = [cell.value for cell in row]
+            print(cells)
+            if cells[0] is not None:
+                cells = [cell.value for cell in row]
+                category = cells[0]
+                worked = int(cells[1])
+                reserve = int(cells[2])
+                quota[category] = (worked, reserve)
+
     print(locations)
     max_location = len(locations.keys())
     max_shift = max([locations[k]['end'] for k in locations]) - min([locations[k]['start'] for k in locations]) + 1
     print(max_location, max_shift)
+
+    sheet = wb_obj['séances']
+    meeting_slots = {}
+    for row in sheet.iter_rows():
+        if len(row) > 0:
+            if row[0] is not None:
+                cells = [cell.value for cell in row]
+                if cells[0] is not None:
+                    group = cells[0]
+                    day = cells[1]     
+                    times = []
+                    ktimes = -1               
+                    for x in cells[2:4]:
+                        #print(cells[2:4], cells[2], cells[3], x)
+                        ktimes += 1
+                        if x is None or not x[0].isdigit():
+                            print(f'{x} is not a time')
+                        else:
+                            hh = int(x.lower().split('h')[0])-8
+                            mm = x.lower().split('h')[1]
+                            if len(mm) > 0:
+                                mm = int(mm)
+                            else:
+                                mm = 0
+                            if ktimes == 1 and mm == 0 :
+                                times.append(hh-1)
+                            else:
+                                times.append(hh)
+                    print(times)
+                    meeting_slots[group] = (day, times[0], times[1])
 
     sheet = wb_obj['guichetiers']
     n = -1
@@ -116,7 +162,7 @@ def read_work_schedules(xlsx_filename):
     print()
 
 
-    return availability, librarians, locations
+    return availability, librarians, locations, quota, meeting_slots
 
 
 if __name__ == '__main__':
@@ -125,10 +171,11 @@ if __name__ == '__main__':
         print('Le fichier XLSX doit contenir les horaires étendus des collaborateurs')
         exit(1)
     else:
-        availabilities, librarians, locations = read_work_schedules(sys.argv[1])
+        availabilities, librarians, locations, quota, meeting_slots = read_work_schedules(sys.argv[1])
         outfile = open('work_schedule.py', 'w')
         outfile.write('from numpy import array, int8\n\n')
         outfile.write(f'librarians = {str(librarians)}\n')
         outfile.write(f'shift_requests = {str(availabilities)}\n')
         outfile.write(f'\nmeeting_slots = {str(meeting_slots)}\n')
         outfile.write(f'\nlocations = {str(locations)}\n')
+        outfile.write(f'\nquota = {str(quota)}\n')
