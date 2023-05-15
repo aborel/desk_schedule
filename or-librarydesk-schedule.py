@@ -122,13 +122,13 @@ def main():
         for s in all_shifts:
             for lo in all_locations:
                 if s < locations[lo]['start'] or s > locations[lo]['end']:
-                    model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0).OnlyEnforceIf(oneLibrariaPerShift)
+                    model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 0).OnlyEnforceIf(oneLibrariaPerShift)
                     n_conditions += 1
                 elif s == all_shifts[-1] and (d == all_days[-1]):
-                    model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0).OnlyEnforceIf(oneLibrariaPerShift)
+                    model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 0).OnlyEnforceIf(oneLibrariaPerShift)
                     n_conditions += 1
                 else:
-                    model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 1).OnlyEnforceIf(oneLibrariaPerShift)
+                    model.Add(sum([shifts[(n, d, s, lo)] for n in all_librarians]) == 1).OnlyEnforceIf(oneLibrariaPerShift)
                     n_conditions += 1 
     
     model.Proto().assumptions.append(oneLibrariaPerShift.Index())
@@ -138,7 +138,7 @@ def main():
     for d in all_days:
         for s in all_shifts:
             for n in all_librarians:
-                model.Add(sum(shifts[(n, d, s, lo)] for lo in all_locations) <= 1).OnlyEnforceIf(oneShiftAtATime)
+                model.Add(sum([shifts[(n, d, s, lo)] for lo in all_locations]) <= 1).OnlyEnforceIf(oneShiftAtATime)
                 n_conditions += 1 
     model.Proto().assumptions.append(oneShiftAtATime.Index())
 
@@ -149,8 +149,10 @@ def main():
     for n in all_librarians:
         delta_vars = []
         for d in all_days:
-            model.Add(sum(shifts[(n, d, s, lo)]
-                for s in all_shifts for lo in all_locations) <= max_shfts_per_day)
+            model.Add(sum([shifts[(n, d, s, lo)]
+                for s in all_shifts for lo in all_locations]) +
+            sum([shifts[(n, d, s, lo)]
+                for s in all_shifts[-1:] for lo in all_locations]) <= max_shfts_per_day)
             n_conditions += 1
 
             run_length = librarians[n]['prefered_length']
@@ -174,15 +176,15 @@ def main():
         # only assign max. one 18-20 shift for a given librarian
         maxOneLateShift = model.NewBoolVar('maxOneLateShift')
         s = all_shifts[-1]
-        model.Add(sum(shifts[(n, d, s, lo)]
-            for d in all_days for lo in all_locations) <= 1).OnlyEnforceIf(maxOneLateShift)
+        model.Add(sum([shifts[(n, d, s, lo)]
+            for d in all_days for lo in all_locations]) <= 1).OnlyEnforceIf(maxOneLateShift)
         n_conditions += 1
 
         # prevent 17-18 + 18-20 sequence for any librarian
         noSeventeenToTwenty = model.NewBoolVar('noSeventeenToTwenty')
         for d in all_days:
-            model.Add(sum(shifts[(n, d, s, lo)]
-                for s in all_shifts[-2:] for lo in all_locations) <= 1).OnlyEnforceIf(noSeventeenToTwenty)
+            model.Add(sum([shifts[(n, d, s, lo)]
+                for s in all_shifts[-2:] for lo in all_locations]) <= 1).OnlyEnforceIf(noSeventeenToTwenty)
             n_conditions += 1
 
     model.Proto().assumptions.append(preferedRunLength.Index())
@@ -257,8 +259,8 @@ def main():
 
     # pylint: disable=g-complex-comprehension
     model.Maximize(
-        sum(shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)] for n in all_librarians
-            for d in all_days for s in all_shifts for lo in all_locations))
+        sum([shift_requests[n][d][s][lo] * shifts[(n, d, s, lo)] for n in all_librarians
+                    for d in all_days for s in all_shifts for lo in all_locations]))
     # Creates the solver and solve.
     solver = cp_model.CpSolver()
     #status = solver.Solve(model)
