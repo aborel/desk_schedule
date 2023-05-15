@@ -9,6 +9,7 @@ from numpy import array
 import itertools
 import argparse
 from datetime import datetime
+import json
 
 from errors import log_message, log_error_message, get_stack_trace
 
@@ -133,12 +134,12 @@ def main(parameter_file):
     if rules['UseAbsences']:
         vacation = json.loads(open('vacation.json', 'r').read())
         for n in all_librarians:
-            if librarian[n]["name"] not in vacation:
+            if librarians[n]["name"] not in vacation:
                 vacation[librarian[n]['name']] = []
     else:
         vacation = {}
         for n in all_librarians:
-            vacation[librarian[n]['name']] = []
+            vacation[librarians[n]['name']] = []
 
     print(vacation)
 
