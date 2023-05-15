@@ -37,21 +37,25 @@ def read_work_schedules(xlsx_filename):
                                 print(f'WTF {x}')
                             else:
                                 print(boundaries)
+                                int_boundaries = []
                                 # rules:
                                 # - start time: if minutes are non-zero, round up
                                 # - end time: if minutes are non-zero, round down
+                                # also: remove 1 from end time to get the beginning of the last slot
                                 k = 0
                                 for b in boundaries:
                                     split_b = b.strip().split('h')
                                     hour = int(split_b[0])
-                                    if split_b[1] > '00':
-                                        if k % 2 == 1:
+                                    if k % 2 == 0:
+                                        if split_b[1] > '00':
                                             hour += 1
-                                        else:
-                                            pass
                                     else:
-                                        pass
-                                    print([b, hour])
+                                        hour -= 1
+
+                                    #print([b, hour])
+                                    int_boundaries.append(hour-8)
+                                    k += 1
+                                print(int_boundaries)
 
                     
         else:
