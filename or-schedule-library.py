@@ -49,6 +49,7 @@ locations = {
     2: 'STM'
 }
 
+
 def main():
     # This program tries to find an optimal assignment of librarians to shifts
     # (10 shifts per day, for 5 days), subject to some constraints (see below).
@@ -69,7 +70,7 @@ def main():
     # https://stackoverflow.com/questions/19597473/binary-random-array-with-a-specific-proportion-of-ones
     # shift_requests = [numpy.random.choice([0, 1], size=(5,10, 3), p=[4./6, 2./6]) for k in range(43)]
 
-    shift_requests = [numpy.random.choice([0, 1], size=(5,10, 3), p=[5./6, 1./6]) for k in range(43)]
+    shift_requests = [numpy.random.choice([0, 1], size=(5,10, 3), p=[3./6, 3./6]) for k in range(43)]
 
 
     # Creates the model.
@@ -108,10 +109,11 @@ def main():
     
     min_shifts_per_librarian = (num_shifts * num_days * num_locations) // num_librarians
     print('min_shifts_per_librarian: ', min_shifts_per_librarian)
-    if num_shifts * num_days % num_librarians == 0:
+    if num_shifts * num_days * num_locations % num_librarians == 0:
         max_shifts_per_librarian = min_shifts_per_librarian
     else:
         max_shifts_per_librarian = min_shifts_per_librarian + 1
+    print('max_shifts_per_librarian: ', max_shifts_per_librarian)
     for n in all_librarians:
         num_shifts_worked = 0
         for d in all_days:
@@ -119,7 +121,6 @@ def main():
                 for lo in all_locations:
                     num_shifts_worked += shifts[(n, d, s, lo)]
         model.Add(min_shifts_per_librarian <= num_shifts_worked)
-        print('max_shifts_per_librarian: ', max_shifts_per_librarian)
         model.Add(num_shifts_worked <= max_shifts_per_librarian)
 
     # pylint: disable=g-complex-comprehension
