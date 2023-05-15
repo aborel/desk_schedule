@@ -131,7 +131,20 @@ def main():
 
         model.Add(out_of_time_shifts <= 1)
         model.Add(min_shifts_per_librarian <= num_shifts_worked)
+        model.Add(num_shifts_worked >= quota[librarians[n]['type']][0] - 1)
         model.Add(num_shifts_worked <= quota[librarians[n]['type']][0])
+
+    
+    sector_score = len(all_days)*[{}]
+    
+    for d in all_days:
+        for sector in sector_semester_quotas:
+            sector_score[d][sector] = sum([shifts[(n, d, s, lo)] for n in all_librarians
+                for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
+
+            #model.Add(sector_score[d][sector] <= sector_semester_quotas[sector])
+    
+    
 
     # pylint: disable=g-complex-comprehension
     model.Maximize(
@@ -147,7 +160,7 @@ def main():
     print('cp_model.OPTIMAL', cp_model.OPTIMAL)
     print('-\nSolved? ', status)
     
-    
+    print()
     for d in all_days:
         print('Day', d)
         for lo in all_locations:
@@ -164,15 +177,20 @@ def main():
         for sector in sector_semester_quotas:
             score = sum([solver.Value(shifts[(n, d, s, lo)]) for n in all_librarians
                         for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
-            print(f'Daily shifts for {sector.upper()}: {score}')
-
-        print()
+            
+            unique_librarians = 0
+            for n in all_librarians:
+                worked_today = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts
+                    for lo in all_locations if librarians[n]['sector'] == sector])
+                if worked_today > 0:
+                    unique_librarians += 1
+            print(f'Daily shifts for {sector.upper()}: {score} (using {unique_librarians} unique librarian(s), minimum {sector_semester_quotas[sector]}')
+    print()
 
     for n in all_librarians:
         score = sum(solver.Value(shifts[(n, d, s, lo)])
             for d in all_days for s in all_shifts for lo in all_locations)
         print(f'{librarians[n]["name"]} is working {score}/{quota[librarians[n]["type"]][0]} shifts')
-
 
     # Statistics.
 
