@@ -8,7 +8,8 @@ import numpy
 from numpy import array
 import itertools
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
+import dateparser
 import json
 
 from errors import log_message, log_error_message, get_stack_trace
@@ -142,6 +143,25 @@ def main(parameter_file):
             vacation[librarians[n]['name']] = []
 
     print(vacation)
+
+    ## TODO integration vacation data into shift_requests
+    for n in all_librarians:
+        for d in all_days:
+            # TODO check whether this is a problem if we don't have a specific date
+            desk_day = dateparser.parse(weekdays[d])
+            # QUICKFIX make sure week days are in the current week if no specific dates are given
+            if desk_day < dateparser.parse('Sunday'):
+                desk_day += timedelta(days=7)
+            print(weekdays[d], desk_day)
+            for leave in vacation[librarians[n]['name']]:
+                print(librarians[n]['name'], leave)
+                if (desk_day >= dateparser.parse(leave[0])) and (desk_day <= dateparser.parse(leave[1])):
+                    print(f'{librarians[n]} must not work on {weekdays[d]}')
+                    for s in all_shifts:
+                        for lo in all_locations:
+                            # TESTING this could be it
+                            shift_requests[n][d][s][lo] = 0
+                            pass
 
     if rules['oneLibrariaPerShift']:
         oneLibrariaPerShift = model.NewBoolVar('oneLibrariaPerShift')
@@ -506,7 +526,7 @@ def main(parameter_file):
     main_title = "Proposed desk schedule"
     
     datatables_script = """<script type="text/javascript"
-              src="https://code.jquery.com/jquery-3.3.1.min.js"
+              src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"
               crossorigin="anonymous"></script>\n"""
     datatables_script += '<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.20/datatables.js"></script>'
     
