@@ -62,9 +62,17 @@ def run_desk_schedule(tkroot, width_chars):
         pass
 
     f_err = open(error_file, "w")
+    f_err.write(error_file_header)
     f_err.close()
 
- 
+    if absences is not None:
+        # TODO call parse_absences
+        pass
+
+    if horaires is not None:
+        # TODO call or-librarydesk-schedule, need to make it a module first
+        pass
+
 
     f_err = open(error_file, "r")
     error_content = f_err.read()
