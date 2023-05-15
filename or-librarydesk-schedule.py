@@ -142,6 +142,7 @@ def main():
     if rules['maxTwoShiftsPerDay']:
         # Each librarian works at most max_shifts_per_day=2 shift per day.
         # TODO: mix Accueil and STM shifts over the week?
+        # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
         maxTwoShiftsPerDay = model.NewBoolVar('maxTwoShiftsPerDay')
         for n in all_librarians:
             for d in all_days:
@@ -154,6 +155,7 @@ def main():
 
     delta_vars1 = {}
     delta_vars2 = {}
+    # TODO: probably not valid if we switch to 2h shifts, or 2.5, or 3?
     for n in all_librarians:
         if librarians[n]['prefered_length'] > 1:
             for d in all_days:
@@ -186,6 +188,7 @@ def main():
 
     if rules['maxOneLateShift']:
         # only assign max. one 18-20 shift for a given librarian
+        # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
         maxOneLateShift = model.NewBoolVar('maxOneLateShift')
         s = all_shifts[-1]
         for n in all_librarians:
@@ -205,6 +208,7 @@ def main():
         model.Proto().assumptions.append(noSeventeenToTwenty.Index())
 
     if rules['noTwelveToFourteen']:
+        # TODO: probably valid if we switch to 2h shifts, or 2.5, or 3?
         # prevent 12-13 + 13-14 sequence for any librarian
         noTwelveToFourteen = model.NewBoolVar('noTwelveToFourteen')
         for n in all_librarians:
@@ -238,6 +242,7 @@ def main():
     maxActiveShifts = model.NewBoolVar('maxActiveShifts')
     minReserveShifts = model.NewBoolVar('minReserveShifts')
     maxReserveShifts = model.NewBoolVar('maxReserveShifts')
+    # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
     for n in all_librarians:
         num_shifts_worked = 0
         num_shifts_reserve = 0
@@ -289,6 +294,7 @@ def main():
     model.Proto().assumptions.append(maxActiveShifts.Index())
     model.Proto().assumptions.append(maxReserveShifts.Index())
     
+    # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
     for d in all_days:
         for sector in sector_semester_quotas:
             sector_score[d][sector] = sum([shifts[(n, d, s, lo)] for n in all_librarians
@@ -351,6 +357,7 @@ def main():
                     #print(n, d, s, lo)
                     #print(shifts[(n, d, s, lo)])
                     # FIXME don't forget the dir meeting check!!!
+                    # TODO: definitely not valid if we switch to 2h shifts, or 2.5, or 3?
                     if solver.Value(shifts[(n, d, s, lo)]) == 1:
                         if shift_requests[n][d][s][lo] == 1:
                             if (not d == meeting_slots[librarians[n]['sector']][0]
@@ -378,6 +385,7 @@ def main():
                             report += line + '<br/>\n'
 
         for sector in sector_semester_quotas:
+            # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
             score = sum([solver.Value(shifts[(n, d, s, lo)]) for n in all_librarians
                         for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
             score += sum([solver.Value(shifts[(n, d, all_shifts[-1], lo)]) for n in all_librarians
@@ -412,6 +420,7 @@ def main():
     print(line)
     report += '<br/>\n' + line + '<br/>\n'
     for n in all_librarians:
+        # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
         score = sum(solver.Value(shifts[(n, d, s, lo)])
             for d in all_days for s in all_shifts for lo in all_locations if locations[lo]['name'].lower().find('remplacement') < 0)
         score += sum(solver.Value(shifts[(n, d, all_shifts[-1], lo)])
@@ -489,6 +498,7 @@ body {
     for d in all_days:
         for s in all_shifts:
             for lo in all_locations:
+                # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
                 if s < locations[lo]['times'][d]['start'] or s > locations[lo]['times'][d]['end']:
                     pass
                 elif s == all_shifts[-1] and (d == all_days[-1]):
@@ -506,6 +516,7 @@ body {
     guichetbiblio_table += "<tr>\n"
     guichetbiblio_table += '<th scope="col">Poste</th>'
     for s in all_shifts:
+        # TODO: definitely not valid if we switch to 2h shifts, or 2.5, or 3?
         if s < all_shifts[-1]:
             guichetbiblio_table += f'<th scope="col">{(s+8):02}:00-{(s+9):02}:00</th>'
         else:
@@ -540,6 +551,7 @@ body {
     table += "\n</tr>\n</thead>\n<tbody>"
 
     for s in all_shifts:
+        # TODO: definitely not valid if we switch to 2h shifts, or 2.5, or 3?
         for lo in all_locations:
             table += "<tr>\n"
             if s < all_shifts[-1]:
