@@ -96,6 +96,7 @@ def main():
 
     # Maximum normal shift, the last one was special in the old shift model
     max_shift = num_shifts
+    print('rules:', rules)
  
     # Creates the model.
     model = cp_model.CpModel()
@@ -147,15 +148,39 @@ def main():
         # Each librarian works at most max_shifts_per_day=2 hours per day.
         # TODO: mix Accueil and STM shifts over the week?
         # TESTING Should still work with non-1h shifts, but probably not applicable in that case
+        max_shifts_per_day = 2
         maxTwoShiftsPerDay = model.NewBoolVar('maxTwoShiftsPerDay')
         for n in all_librarians:
             for d in all_days:
                 model.Add(sum([shifts[(n, d, s, lo)]
-                    for s in all_shifts for lo in all_locations]) +
-                sum([shifts[(n, d, s, lo)]
-                    for s in all_shifts[-1:] for lo in all_locations]) <= max_shifts_per_day)
+                    for s in all_shifts for lo in all_locations]) <= max_shifts_per_day)
                 n_conditions += 1
         model.Proto().assumptions.append(maxTwoShiftsPerDay.Index())
+
+    if rules['maxOneShiftPerDay']:
+        max_shifts_per_day = 1
+        # Each librarian works at most max_shifts_per_day=1 shifts per day.
+        maxOneShiftPerDay = model.NewBoolVar('maxOneShiftsPerDay')
+        for n in all_librarians:
+            for d in all_days:
+                model.Add(sum([shifts[(n, d, s, lo)]
+                    for s in all_shifts for lo in all_locations]) <= max_shifts_per_day)
+                n_conditions += 1
+        model.Proto().assumptions.append(maxOneShiftPerDay.Index())
+
+    if rules['minOneShiftAverage']:
+        min_average_shifts = 1
+        # Each librarian works at at least min_average_shifts=1 shifts per week/over the period.
+        minOneShiftAverage = model.NewBoolVar('minOneShifAtverage')
+        for n in all_librarians:
+            if quota[librarians[n]['type']][0] > 0:
+                for d in all_days:
+                    model.Add(sum([shifts[(n, d, s, lo)]
+                        for s in all_shifts for lo in all_locations]) >= min_average_shifts)
+                    n_conditions += 1
+            else:
+                print(librarians[n]['name'], ' is exempted from minimum av. shifts')
+        model.Proto().assumptions.append(minOneShiftAverage.Index())
 
     delta_vars1 = {}
     delta_vars2 = {}
@@ -246,10 +271,7 @@ def main():
     # his quota of shifts (or quota - 1) on the active or reserve locations
 
     noOutOfTimeShift = model.NewBoolVar('noOutOfTimeShift')
-    minActiveShifts = model.NewBoolVar('minActiveShifts')
-    maxActiveShifts = model.NewBoolVar('maxActiveShifts')
-    minReserveShifts = model.NewBoolVar('minReserveShifts')
-    maxReserveShifts = model.NewBoolVar('maxReserveShifts')
+    
     # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
     for n in all_librarians:
         num_hours_worked = 0
@@ -275,26 +297,34 @@ def main():
         if rules['noOutOfTimeShift']:        
             model.Add(out_of_time_shifts < 1).OnlyEnforceIf(noOutOfTimeShift)
             n_conditions += 1
-        if rules['minActiveShifts']:  
+        if rules['minActiveShifts']:
+            minActiveShifts = model.NewBoolVar('minActiveShifts')
             model.Add(num_hours_worked >= quota[librarians[n]['type']][0] - quota[librarians[n]['type']][0]//2 ).OnlyEnforceIf(minActiveShifts)
+            model.Proto().assumptions.append(minActiveShifts.Index())
             n_conditions += 1
-        if rules['minReserveShifts']: 
+        if rules['minReserveShifts']:
+            minReserveShifts = model.NewBoolVar('minReserveShifts')
             model.Add(num_hours_reserve >= quota[librarians[n]['type']][1] - 1).OnlyEnforceIf(minReserveShifts)
             n_conditions += 1
-        if rules['maxActiveShifts']: 
+            model.Proto().assumptions.append(minReserveShifts.Index())
+        if rules['maxActiveShifts']:
+            maxActiveShifts = model.NewBoolVar('maxActiveShifts')
             model.Add(num_hours_worked <= quota[librarians[n]['type']][0]).OnlyEnforceIf(maxActiveShifts)
             n_conditions += 1
-        if rules['maxReserveShifts']: 
+            model.Proto().assumptions.append(maxActiveShifts.Index())
+        if rules['maxReserveShifts']:
+            maxReserveShifts = model.NewBoolVar('maxReserveShifts')
             model.Add(num_hours_reserve <= quota[librarians[n]['type']][1]).OnlyEnforceIf(maxReserveShifts)
             n_conditions += 1
+            model.Proto().assumptions.append(maxReserveShifts.Index())
         
     sector_score = len(all_days)*[{}]
 
     model.Proto().assumptions.append(noOutOfTimeShift.Index())
-    model.Proto().assumptions.append(minActiveShifts.Index())
-    model.Proto().assumptions.append(minReserveShifts.Index())
-    model.Proto().assumptions.append(maxActiveShifts.Index())
-    model.Proto().assumptions.append(maxReserveShifts.Index())
+    
+    
+    
+    
     
     # TESTING: is this valid if we switch to 2h shifts, or 2.5, or 3?
     for d in all_days:
