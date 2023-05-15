@@ -52,10 +52,8 @@ def run_desk_schedule(tkroot, width_chars):
 
     init_error_log()
     
-
     if absences is not None:
-        # TODO call parse_absences
-        pass
+        parse_absences(absences)
 
     if horaires is not None:
         # TODO call or-librarydesk-schedule, need to make it a module first

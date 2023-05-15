@@ -3,7 +3,11 @@ import sys
 from bs4 import BeautifulSoup
 import dateparser
 
-# From https://absences.epfl.ch/cgi-bin/abs/lang=en/menu=plannings/listAbs?week=1
+from errors import log_message
+
+
+# From https://absences2.epfl.ch/home/plannings
+# save as HTML - full page from Firefox => should be a few hundred KBs (+ one subfolder we don't need)
 
 
 def get_all_text(node):
@@ -103,8 +107,9 @@ def parse_absences(htmlfile):
                     print(f'{librarians[ridx]} is off due to {get_all_text(event).strip()} from {known_days[start]} to {known_days[end]}')
 
     except IndexError as e:
-        print('no table found?', e)
-    return None
+        log_message('no table found?' + str(e))
+    except Exception as e:
+        log_message('Something went really wrong' + str(e))
 
 
 if __name__ == "__main__":
