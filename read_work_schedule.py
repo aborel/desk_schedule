@@ -74,7 +74,7 @@ def read_work_schedules(xlsx_filename):
                     shifts.append((time, value))
     print('shifts: ', shifts)
     max_shift = len(shifts)
-
+    shift_starts = [x[0] for x in shifts]
 
     # Get locations from relevant sheet
     sheet = wb_obj['guichets']
@@ -106,8 +106,8 @@ def read_work_schedules(xlsx_filename):
                         absolute_times = (max([x[0] for x in shifts if x[0] <= times[0]]),
                             min([x[0] for x in shifts if x[0] + x[1] >= times[1]]))
                     print('times: ', absolute_times)
-                
-                    locations[cells[0]]['times'][day] = {'start': absolute_times[0], 'end': absolute_times[1]}
+                    locations[cells[0]]['times'][day] = {'start': shift_starts.index(absolute_times[0]),
+                        'end': shift_starts.index(absolute_times[1])}
 
     sheet = wb_obj['quotas']
     quota = {}
