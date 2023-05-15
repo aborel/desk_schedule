@@ -7,6 +7,17 @@ max_shift = 10
 max_location = 5
 max_day = 5
 
+# Sector and direction meetings:
+# - day (0 = Monday)
+# - start slot (0 = 8:00)
+# - end slot (0 = 8:00)
+meeting_slots = {
+    'dir': (3, 0, 5),
+    'spi': (1, 5, 6),
+    'cado': (1, 1, 2),
+    'search': (1, 3, 4)
+}
+
 
 def read_work_schedules(xlsx_filename):
     wb_obj = openpyxl.load_workbook(xlsx_filename)
@@ -96,5 +107,4 @@ if __name__ == '__main__':
         outfile.write('from numpy import array, int8\n\n')
         outfile.write(f'librarians = {str(librarians)}\n')
         outfile.write(f'shift_requests = {str(availabilities)}\n')
-
-
+        outfile.write(f'\nmeeting_slots = {str(meeting_slots)}\n')
