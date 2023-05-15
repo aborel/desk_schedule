@@ -107,7 +107,7 @@ def main():
                 quota[category][1] * scale,
                 quota[category][2] * scale)
 
-    # Diagnostics: compate the sum of minimal quotas and the total amount of shofts to fill
+    # Diagnostics: compate the sum of minimal quotas and the total amount of shifts to fill
     minimum_quotas = sum([quota[librarians[n]['type']][1] for n in all_librarians])
     maximum_quotas = sum([quota[librarians[n]['type']][0] for n in all_librarians])
     total_shifts = num_days * num_shifts * num_locations
@@ -481,7 +481,6 @@ def main():
         s3 = f', with {score_days} days on duty'
         line = s1 + s2 + s3
         x = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts for lo in all_locations for d in all_days])
-        line += f'\n<br/>{x} shifts?\n'
         print(line)
         report += line + '<br/>\n'
 
