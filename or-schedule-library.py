@@ -63,7 +63,7 @@ def main():
     # (10 shifts per day, for 5 days), subject to some constraints (see below).
     # Each librarian can request to be assigned to specific shifts.
     # The optimal assignment maximizes the number of fulfilled shift requests.
-    num_shifts = 10
+    num_shifts = 11
     num_days = 5
     # TODO: deal with replacement shifts later
     num_locations = len(locations.keys())
@@ -98,6 +98,8 @@ def main():
             for lo in all_locations:
                 if (lo == 2 or lo == 4) and s < 2:
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0)
+                elif s == all_shifts[-1] and (lo > 0 or d == all_days[-1]):
+                    model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 0)
                 else:
                     model.Add(sum(shifts[(n, d, s, lo)] for n in all_librarians) == 1)
 
@@ -127,6 +129,9 @@ def main():
                     # This doesn't seem to work, librarians are still assigned there.
                     if lo < 3:
                         num_shifts_worked += shifts[(n, d, s, lo)]
+                        if s > 10:
+                            # Last shift must be counted twice, as it lasts 2 hours
+                            num_shifts_worked += shifts[(n, d, s, lo)]
                     else:
                         num_shifts_reserve += shifts[(n, d, s, lo)]
                     out_of_time_shifts += shifts[(n, d, s, lo)] * (1-shift_requests[n][d][s][lo])
@@ -162,7 +167,7 @@ def main():
     print('cp_model.FEASIBLE', cp_model.FEASIBLE)
     print('cp_model.INFEASIBLE', cp_model.INFEASIBLE)
     print('cp_model.OPTIMAL', cp_model.OPTIMAL)
-    print('-\nSolved? ', status)
+    print('-\nSolved? ', status, solver.StatusName())
     
     print()
     for d in all_days:
