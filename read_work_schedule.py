@@ -139,11 +139,11 @@ def read_work_schedules(xlsx_filename):
                             if len(minutes) == 0:
                                 minutes = '0'
                             mm = int(minutes)/60.0
-                            print(hh, mm, [x[0] - shifts[0][0] for x in shifts if x[0] <= hh + mm])
+                            print('meeting: ', hh, mm, [x[0] - shifts[0][0] for x in shifts if x[0] <= hh + mm])
                             times.append(max([x[0] - shifts[0][0] for x in shifts if x[0] <= hh + mm]))
                             times.append(min([x[0] - shifts[0][0] for x in shifts if x[0] >= hh + mm]))
                     print(times)
-                    meeting_slots[group] = (day, times[0], times[1])
+                    meeting_slots[group] = (day, times[0], times[3])
 
     sheet = wb_obj['guichetiers']
     n = -1
