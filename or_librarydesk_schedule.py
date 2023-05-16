@@ -16,46 +16,15 @@ from errors import log_message, log_error_message, get_stack_trace
 
 max_shifts_per_day = 2
 
-# based on K_Guichets//K2_Guichets_physiques/K2.03_Tournus/quotas_par_guichetier_20190131.JPG
-# TODO: ask for the rule for bl+coordinator
-# Sample quota object; actual values extracted from the Excel spreadsheet
-"""
-quota = {
-    '40': (3, 2),
-    '50': (3, 2),
-    '60': (4, 3),
-    '70': (4, 3),
-    '80': (5, 3),
-    '90': (5, 4),
-    '100': (5, 4),
-    'dir': (2, 0),
-    'bl40': (2, 2),
-    'bl50': (2, 2),
-    'bl60': (3, 2),
-    'bl70': (3, 2),
-    'bl80': (3, 2),
-    'bl90': (3, 2),
-    'bl100': (3, 2),
-    'coord40': (3, 2),
-    'coord50': (3, 2),
-    'coord60': (3, 3),
-    'coord70': (3, 3),
-    'coord80': (3, 3),
-    'coord90': (3, 4),
-    'coord100': (3, 4),
-}
-"""
+# TODO if actually useful, this should be part of the input file...
 
 sector_semester_quotas = {
-    'search': 6,
-    'cado': 6,
-    'spi': 1
-}
+    'SOAR': 5,
+    'AIR': 2,
+    'CUBA': 2,
+    'SPICE': 1,
+    'USEP': 1
 
-sector_holiday_quotas = {
-    'search': 3,
-    'cado': 3,
-    'spi': 1
 }
 
 def main(parameter_file):
