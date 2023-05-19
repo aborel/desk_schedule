@@ -32,6 +32,7 @@ def list_divs(node, ntabs=0):
 
 
 def parse_absences(htmlfile):
+    log_message(f'Will read absences from {htmlfile}')
     HTMLFile = open(htmlfile, "r")
     index = HTMLFile.read()
 

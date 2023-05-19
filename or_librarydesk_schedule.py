@@ -102,10 +102,14 @@ def main(parameter_file):
                         model.NewBoolVar('shift_n%id%is%ilo%i' % (n, d, s, lo))
 
     if rules['UseAbsences']:
-        vacation = json.loads(open('vacation.json', 'r').read())
+        try:
+            vacation = json.loads(open('vacation.json', 'r').read())
+        except:
+            log_error_message('UseAbsences rule selected but no vacation.json file found => ignoring directive')
+            vacation = {}
         for n in all_librarians:
             if librarians[n]["name"] not in vacation:
-                vacation[librarian[n]['name']] = []
+                vacation[librarians[n]['name']] = []
     else:
         vacation = {}
         for n in all_librarians:
