@@ -108,8 +108,8 @@ def read_work_schedules(xlsx_filename):
                         #log_message('stuff: ', times, shifts, [x[0] for x in shifts if x[0] <= times[0]])
                         #log_message([(x[0], x[0] + x[1], times[1]) for x in shifts ])
                         absolute_times = (max([x[0] for x in shifts if x[0] <= times[0]]),
-                            min([x[0] for x in shifts if x[0] + x[1] >= times[1]]))
-                    log_message('times: ' + str(absolute_times))
+                                          min([x[0] for x in shifts if x[0] + x[1] >= times[1]]))
+                    log_message('Absolute times (minutes): ' + str(absolute_times))
                     locations[cells[0]]['times'][day] = {'start': shift_starts.index(absolute_times[0]),
                         'end': shift_starts.index(absolute_times[1])}
 
@@ -167,8 +167,8 @@ def read_work_schedules(xlsx_filename):
                                 times.append(min([x[0] for x in shifts]))
                             if times[-1] > shifts[-1][0]:
                                 pass
-                    log_message(f'{group} meeting times: {times}')
-                    log_message(f'{group} meeting shifts: {shifts}')
+                    log_message(f'{group} meeting times on day {day}: {times}')
+                    log_message(f'{group} meeting shifts on day {day}: {shifts}')
 
                     meeting_slots[group] = (day, [x[0] for x in shifts].index(times[0]), [x[0] for x in shifts].index(times[3]) -1)
 
