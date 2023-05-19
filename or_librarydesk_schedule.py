@@ -194,7 +194,7 @@ def main(parameter_file):
                         for s in all_shifts for lo in all_locations for d in all_days]) >= min_average_shifts)
                     n_conditions += 1
             else:
-                log_message(librarians[n]['name'], ' is exempted from minimum av. shifts')
+                log_message(f'{librarians[n]["name"]} is exempted from minimum av. shifts')
         model.Proto().assumptions.append(minOneShiftAverage.Index())
 
     delta_vars1 = {}
@@ -383,7 +383,7 @@ def main(parameter_file):
         stat_details = f'{solver.ResponseStats()}'
         log_message(f"**Solver statistics:**\n{stat_details}")
         for var_index in solver.ResponseProto().sufficient_assumptions_for_infeasibility:
-            log_message(var_index, model.VarIndexToVarProto(var_index)) # prints "v1"
+            log_message(f'var_index {var_index},  model.VarIndexToVarProto(var_index) {model.VarIndexToVarProto(var_index)}') # prints "v1"
         log_message('---')
         log_message('SufficientAssumptionsForInfeasibility = '
               f'{solver.SufficientAssumptionsForInfeasibility()}')
@@ -421,7 +421,7 @@ def main(parameter_file):
                                 report += line + '<br>\n'
                             else:
                                 line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (problem with a group meeting).'
-                                log_message(line, d, s, meeting_slots[librarians[n]['sector']])
+                                log_message(f"{line} {d} {s} {meeting_slots[librarians[n]['sector']]}")
                                 report += line + '<br>\n'                    
                         else:
                             line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (problem with work hours).'
@@ -665,9 +665,9 @@ body {
                 for d in all_days:
                     for s in all_shifts[0:-1]:
                         for lo in all_locations:
-                            log_message('shifts: ', (n, d, s, lo), solver.Value(shifts[(n, d, s, lo)]))
-                        log_message('delta1: ', (n, d, s, lo), solver.Value(delta_vars1[(n, d, s)]))
-                        log_message('delta2: ', (n, d, s, lo), solver.Value(delta_vars2[(n, d, s)]))
+                            log_message(f'shifts:  {(n, d, s, lo)} {solver.Value(shifts[(n, d, s, lo)])}')
+                        log_message(f'delta1: {(n, d, s, lo)} {solver.Value(delta_vars1[(n, d, s)])}')
+                        log_message(f'delta2: {(n, d, s, lo)} {solver.Value(delta_vars2[(n, d, s)])}')
     """
 
 
