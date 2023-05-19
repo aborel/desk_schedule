@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 import dateparser
 import json
 
+from inspect import currentframe, getframeinfo
+
 from errors import log_message, log_error_message, get_stack_trace
 
 max_shifts_per_day = 2
@@ -115,7 +117,8 @@ def main(parameter_file):
         for n in all_librarians:
             vacation[librarians[n]['name']] = []
 
-    log_message(str(vacation))
+    frameinfo = getframeinfo(currentframe())
+    log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) Vacation days: {vacation}')
 
     ## TODO integration vacation data into shift_requests
     for n in all_librarians:
@@ -124,21 +127,24 @@ def main(parameter_file):
             # QUICKFIX make sure week days are in the current week if no specific dates are given
             if desk_day < dateparser.parse('Sunday'):
                 desk_day += timedelta(days=7)
-            log_message(f'{weekdays[d]} is {desk_day}')
+            frameinfo = getframeinfo(currentframe())
+            log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) {weekdays[d]} is {desk_day}')
             for leave in vacation[librarians[n]['name']]:
-                log_message(f"{librarians[n]['name']} on vacation: {leave}")
+                frameinfo = getframeinfo(currentframe())
+                log_message(f"({frameinfo.filename}:{frameinfo.lineno + 1}) {librarians[n]['name']} on vacation: {leave}")
                 # FIXME this doesn't really work for 1-day leaves. F
                 if (desk_day >= dateparser.parse(leave[0]) - + timedelta(minutes=1)) and \
                         (desk_day <= dateparser.parse(leave[1]) + timedelta(minutes=1)):
-                    log_message(f'{librarians[n]} must not work on {weekdays[d]}')
+                    frameinfo = getframeinfo(currentframe())
+                    log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) {librarians[n]} must not work on {weekdays[d]}')
                     for s in all_shifts:
                         for lo in all_locations:
                             # TESTING this could be it
                             shift_requests[n][d][s][lo] = 0
                             pass
 
-    if rules['oneLibrariaPerShift']:
-        oneLibrariaPerShift = model.NewBoolVar('oneLibrariaPerShift')
+    if rules['oneLibrarianPerShift']:
+        oneLibrariaPerShift = model.NewBoolVar('oneLibrarianPerShift')
         # Each shift at each location is assigned to exactly 1 librarian
         for d in all_days:
             for s in all_shifts:
@@ -306,10 +312,10 @@ def main(parameter_file):
                         num_hours_reserve += shifts[(n, d, s, lo)]*int(desk_shifts[s][1]/60)
                     out_of_time_shifts += shifts[(n, d, s, lo)] * (1-shift_requests[n][d][s][lo])
                     # Shifts during mandatory meetings also count as out of time
-                    if d == meeting_slots[librarians[n]['sector']][0]:
+                    if dateparser.parse(weekdays[d]).weekday() == meeting_slots[librarians[n]['sector']][0]:
                         if s >= meeting_slots[librarians[n]['sector']][1] and s <= meeting_slots[librarians[n]['sector']][2]:
                             out_of_time_shifts += shifts[(n, d, s, lo)] * 1
-                    if d == meeting_slots['dir'][0] and librarians[n]['type'] == 'dir':
+                    if dateparser.parse(weekdays[d]).weekday() == meeting_slots['dir'][0] and librarians[n]['type'] == 'dir':
                         if s >= meeting_slots['dir'][1] and s <= meeting_slots['dir'][2]:
                             out_of_time_shifts += shifts[(n, d, s, lo)] * 1
                     
@@ -400,7 +406,8 @@ def main(parameter_file):
     report = ''
     for d in all_days:
         line = f'Day {d}'
-        log_message(line)
+        frameinfo = getframeinfo(currentframe())
+        log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) {line}')
         report += '<br/>\n' + line + '<br/>\n'
         for lo in all_locations:
             for s in all_shifts:
@@ -604,7 +611,6 @@ body {
     table += '<th scope="col">Time</th>'
     for d in all_days:
         table += f'<th scope="col">{weekdays[d]}</th>'
-
     
     table += "\n</tr>\n</thead>\n<tbody>"
 

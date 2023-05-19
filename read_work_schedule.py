@@ -203,7 +203,7 @@ def read_work_schedules(xlsx_filename):
                                 x += '00'
                             x = x.lower().replace('/', '-').replace("–", "-").replace(';','-')
                             x = x.replace('.', 'h').replace(':', 'h').replace('hh', 'h').replace('h-', 'h00-')
-                            boundaries = x.split('-')
+                            boundaries = [b.strip() for b in x.split('-')]
                             if len(boundaries) < 2:
                                 log_message(f'WTF {x}')
                             else:
