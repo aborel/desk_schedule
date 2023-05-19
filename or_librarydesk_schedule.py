@@ -72,6 +72,8 @@ def main(parameter_file):
             quota[category] = (quota[category][0] * scale,
                 quota[category][1] * scale,
                 quota[category][2] * scale)
+    else:
+        scale = 1
 
     # Diagnostics: compate the sum of minimal quotas and the total amount of shifts to fill
     minimum_quotas = sum([quota[librarians[n]['type']][1] for n in all_librarians])
@@ -102,11 +104,11 @@ def main(parameter_file):
                     shifts[(n, d, s, lo)] = \
                         model.NewBoolVar('shift_n%id%is%ilo%i' % (n, d, s, lo))
 
-    if rules['UseAbsences']:
+    if rules['useAbsences']:
         try:
             vacation = json.loads(open('vacation.json', 'r').read())
         except:
-            log_error_message('UseAbsences rule selected but no vacation.json file found => ignoring directive')
+            log_error_message('useAbsences rule selected but no vacation.json file found => ignoring directive')
             vacation = {}
         for n in all_librarians:
             if librarians[n]["name"] not in vacation:
@@ -341,6 +343,11 @@ def main(parameter_file):
             model.Add(num_hours_reserve <= quota[librarians[n]['type']][1]).OnlyEnforceIf(maxReserveShifts)
             n_conditions += 1
             model.Proto().assumptions.append(maxReserveShifts.Index())
+        if rules['holidaySpecialQuota']:
+            holidaySpecialQuota = model.NewBoolVar('holidaySpecialQuota')
+            model.Add(num_hours_worked >= quota[librarians[n]['type']][2] // scale).OnlyEnforceIf(holidaySpecialQuota)
+            model.Proto().assumptions.append(holidaySpecialQuota.Index())
+            n_conditions += 1
         
     sector_score = len(all_days)*[{}]
 
