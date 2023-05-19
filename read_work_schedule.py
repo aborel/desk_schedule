@@ -48,7 +48,7 @@ def read_work_schedules(xlsx_filename):
                     value = cells[1]
                     weekdays[number] = value
     max_day = number + 1
-    log_message(f'{max_day}  {weekdays}')
+    log_message(f'{max_day} days, namely:  {weekdays}')
 
     # Definition of daily shifts
     sheet = wb_obj['shifts']
@@ -75,7 +75,7 @@ def read_work_schedules(xlsx_filename):
                         value = 0
                     # log_message(cells, time, value)
                     shifts.append((time, value))
-    log_message('shifts: ' + str(shifts))
+    log_message('Shift definitions: ' + str(shifts))
     max_shift = len(shifts)
     shift_starts = [x[0] for x in shifts]
 
@@ -85,7 +85,7 @@ def read_work_schedules(xlsx_filename):
     for row in sheet.iter_rows():
         if len(row) > 0:
             cells = [cell.value for cell in row]
-            log_message(f'{cells}')
+            log_message(f'guichets tab cells: {cells}')
             if cells[0] is not None:
                 name = cells[1]
                 locations[cells[0]] = {'name': cells[1], 'times': {}}
