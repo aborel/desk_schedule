@@ -187,7 +187,7 @@ def read_work_schedules(xlsx_filename):
                     librarians[n] = {'name': name}
                     librarians[n]['sector'] = cells[1]
                     librarians[n]['type'] = cells[2]
-                    librarians[n]['prefered_length'] = cells[3+max_day]
+                    librarians[n]['prefered_length'] = cells[3]
                     # TODO replace fixed constants!
                     new_roster = numpy.zeros(shape=(max_day, max_shift, max_location), dtype=numpy.int8)
                     d = -1
