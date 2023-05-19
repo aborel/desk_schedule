@@ -72,13 +72,12 @@ def run_desk_schedule(tkroot, width_chars):
     
     if error_content.replace('\r', '').replace('\n', '') == error_file_header.replace('\r', '').replace('\n', ''):
         os.remove(error_file)
+        done_info = Label(tkroot, text=f'Done: desk_schedule.html and logs have been created')
+        done_info.pack()
+
     else:
         error_info = Label(tkroot, text=error_message)
         error_info.pack()
-
-    done_info = Label(tkroot, text=f'Done: desk_schedule.html and logs have been created')
-    done_info.pack()
-
 
 root = Tk()
 current_font = font.nametofont("TkDefaultFont")

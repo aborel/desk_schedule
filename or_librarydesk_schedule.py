@@ -345,11 +345,7 @@ def main(parameter_file):
     sector_score = len(all_days)*[{}]
 
     model.Proto().assumptions.append(noOutOfTimeShift.Index())
-    
-    
-    
-    
-    
+        
     # TESTING: is this valid if we switch to 2h shifts, or 2.5, or 3?
     for d in all_days:
         for sector in sector_semester_quotas:
@@ -388,15 +384,15 @@ def main(parameter_file):
     log_message(f'-\nSolved? {str(status)} {solver.StatusName()}')
     
     if status == cp_model.INFEASIBLE:
-        log_message('Damn. Wish I knew why.')
+        log_error_message('Damn. Wish I knew why.')
         stat_details = f'{solver.ResponseStats()}'
-        log_message(f"**Solver statistics:**\n{stat_details}")
+        log_error_message(f"**Solver statistics:**\n{stat_details}")
         for var_index in solver.ResponseProto().sufficient_assumptions_for_infeasibility:
             log_message(f'var_index {var_index},  model.VarIndexToVarProto(var_index) {model.VarIndexToVarProto(var_index)}') # prints "v1"
-        log_message('---')
-        log_message('SufficientAssumptionsForInfeasibility = '
+        log_error_message('---')
+        log_error_message('SufficientAssumptionsForInfeasibility = '
               f'{solver.SufficientAssumptionsForInfeasibility()}')
-        exit(1)
+        raise(Exception("No solution could be found"))
 
     log_message(diagnostics)
     log_message('')
