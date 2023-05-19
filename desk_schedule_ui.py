@@ -59,10 +59,12 @@ def run_desk_schedule(tkroot, width_chars):
 
     if horaires is not None:
         # TODO call or-librarydesk-schedule, need to make it a module first
-        or_librarydesk_schedule.main(horaires)
+        try:
+            or_librarydesk_schedule.main(horaires)
+        except Exception as e:
+            log_error_message(get_stack_trace(e))
     else:
         log_error_message('Vous DEVEZ sélectionner un fichier XLSX contenant les horaires!')
-
 
     f_err = open(error_file, "r")
     error_content = f_err.read()

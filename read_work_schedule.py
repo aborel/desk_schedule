@@ -157,18 +157,18 @@ def read_work_schedules(xlsx_filename):
                             if len(minutes) == 0:
                                 minutes = '0'
                             mm = int(minutes)
-                            log_message(f'meeting: {hh + mm}, {[x[0] for x in shifts if x[0] <= hh + mm]}')
+                            log_message(f'{group} meeting: {hh + mm}, {[x[0] for x in shifts if x[0] <= hh + mm]}')
                             if len([x[0] for x in shifts if x[0] <= hh + mm]) > 0:
                                 times.append(max([x[0] for x in shifts if x[0] <= hh + mm]))
-                                times.append(min([x[0] for x in shifts if x[0] > hh + mm]))
+                                times.append(min([x[0] for x in shifts if x[0] >= hh + mm]))
                             else:
                                 #log_message(min(shifts))
                                 times.append(min([x[0] for x in shifts]))
                                 times.append(min([x[0] for x in shifts]))
                             if times[-1] > shifts[-1][0]:
                                 pass
-                    log_message(f'meeting times: {times}')
-                    log_message(f'meeting shifts: {shifts}')
+                    log_message(f'{group} meeting times: {times}')
+                    log_message(f'{group} meeting shifts: {shifts}')
 
                     meeting_slots[group] = (day, [x[0] for x in shifts].index(times[0]), [x[0] for x in shifts].index(times[3]) -1)
 
