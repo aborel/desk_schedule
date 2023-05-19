@@ -16,7 +16,6 @@ from inspect import currentframe, getframeinfo
 
 from errors import log_message, log_error_message, get_stack_trace
 
-max_shifts_per_day = 2
 
 # TODO if actually useful, this should be part of the input file...
 
