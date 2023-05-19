@@ -191,8 +191,8 @@ def read_work_schedules(xlsx_filename):
                     # TODO replace fixed constants!
                     new_roster = numpy.zeros(shape=(max_day, max_shift, max_location), dtype=numpy.int8)
                     d = -1
-                    # Extract extended work hours
-                    for x in cells[3:3+max_day]:
+                    # Extract extended work hours; skip comment columns
+                    for x in cells[7:7+max_day]:
                         # TODO probably not valid for 2h shifts
                         # new day
                         d += 1
