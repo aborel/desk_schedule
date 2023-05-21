@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
-# From https://developers.google.com/optimization/scheduling/employee_scheduling
-
 from ortools.sat.python import cp_model
 import numpy
 from numpy import array
@@ -28,15 +26,18 @@ sector_semester_quotas = {
 
 }
 
+
 def main(parameter_file):
     # This program tries to find an optimal assignment of librarians to shifts
-    # (typically 10 shifts per day for 5 days), subject to some constraints (see below).
-    # Each librarian can request to be assigned to specific shifts.
+    # (initially 10 shifts per day for 5 days), subject to various constraints.
+    # Each librarian can request a personal schedule, shifts will be assigned
+    # accordingly.
     # The optimal assignment maximizes the number of fulfilled shift requests.
 
     if parameter_file == '':
         from work_schedule import librarians, shift_requests, meeting_slots
-        from work_schedule import quota, locations, rules, weekdays, desk_shifts, msg
+        from work_schedule import quota, locations, rules, weekdays
+        from work_schedule import desk_shifts, msg
     elif parameter_file is not None:
         from read_work_schedule import read_work_schedules, check_minima
         shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(parameter_file)
@@ -60,18 +61,17 @@ def main(parameter_file):
     all_days = range(num_days)
     all_locations = range(num_locations)
 
-
     # Maximum normal shift, the last one was special in the old shift model
     max_shift = num_shifts
     diagnostics += f' \n<br/>rules: {rules} <br/>\n'
 
     if rules['ScaleQuotas']:
         scale = num_days // 5
-        diagnostics += f'quotas will be scaled by an integer factor of {scale} (num_days = {num_days}) <br/>\n'
+        diagnostics += f'quotas will be scaled by an integer factor of {scale} (num_days = {num_days})<br/>\n'
         for category in quota:
             quota[category] = (quota[category][0] * scale,
-                quota[category][1] * scale,
-                quota[category][2] * scale)
+                               quota[category][1] * scale,
+                               quota[category][2] * scale)
     else:
         scale = 1
 
@@ -79,9 +79,9 @@ def main(parameter_file):
     minimum_quotas = sum([quota[librarians[n]['type']][1] for n in all_librarians])
     maximum_quotas = sum([quota[librarians[n]['type']][0] for n in all_librarians])
     total_shifts = num_days * num_shifts * num_locations
-    diagnostics += f'Shift count: max {maximum_quotas}, min {minimum_quotas}, total {total_shifts} <br/>'
+    diagnostics += f'Shift count: max {maximum_quotas}, min {minimum_quotas}, total {total_shifts}<br/>'
     if (total_shifts < minimum_quotas) or (total_shifts > maximum_quotas):
-        diagnostics += 'Your quotas cannot be met with the proposed shifts, remember to skip a few quota rules! <br/>'
+        diagnostics += 'Your quotas cannot be met with the proposed shifts, remember to skip a few quota rules!<br/>'
 
     log_message(diagnostics)
 
@@ -268,7 +268,7 @@ def main(parameter_file):
         # prevent 12-13 + 13-14 sequence for any librarian
         noTwelveToFourteen = model.NewBoolVar('noTwelveToFourteen')
         critical_zone_minutes = [max([x for x in shift_starts if x <= 12*60]),
-            min([x for x in shift_starts if x >= 14*60])]
+                                 min([x for x in shift_starts if x >= 14*60])]
         critical_zone_slots = [shift_starts.index(c) for c in critical_zone_minutes]
         for n in all_librarians:
             for d in all_days:
@@ -391,7 +391,7 @@ def main(parameter_file):
     log_message(f'-\nSolved? {str(status)} {solver.StatusName()}')
     
     if status == cp_model.INFEASIBLE:
-        log_error_message('Damn. Wish I knew why.')
+        log_error_message('INFEASIBLE. Damn. Wish I knew why.')
         stat_details = f'{solver.ResponseStats()}'
         log_error_message(f"**Solver statistics:**\n{stat_details}")
         for var_index in solver.ResponseProto().sufficient_assumptions_for_infeasibility:
@@ -442,9 +442,8 @@ def main(parameter_file):
                             log_message(line)
                             report += line + '<br/>\n'
 
-
         for sector in sector_semester_quotas:
-            # TODO: is this still valid if we switch to 2h shifts, or 2.5, or 3?
+            # TODO: is this still valid for 2h shifts, or 2.5, or 3?
             score = sum([solver.Value(shifts[(n, d, s, lo)]*desk_shifts[s][1])/60 for n in all_librarians
                         for s in all_shifts for lo in all_locations if librarians[n]['sector'] == sector])
             #score += sum([solver.Value(shifts[(n, d, all_shifts[-1], lo)]) for n in all_librarians
@@ -512,7 +511,8 @@ def main(parameter_file):
               src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"
               crossorigin="anonymous"></script>\n"""
     datatables_script += '<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.20/datatables.js"></script>'
-    
+    #TODO add highlighting probably using https://markjs.io/
+
     header = f"<head><title>{main_title}</title>\n{datatables_script}\n"
 
     header += """<style>
@@ -576,7 +576,6 @@ body {
     score += f"<br/>Run on {datetime.now().isoformat()}\n"
     stat_details = f'{solver.ResponseStats()}'
 
-
     guichetbiblio_table = '<div><table id="guichetbiblio" class="table">\n'
     guichetbiblio_table += '<thead>'
     guichetbiblio_table += "<tr>\n"
@@ -605,7 +604,7 @@ body {
             guichetbiblio_table += '<td></td>'
         guichetbiblio_table += "</tr>\n"
 
-    guichetbiblio_table +=  "</tbody></table></div>"
+    guichetbiblio_table += "</tbody></table></div>"
 
     table = '<div><table id="schedule" class="table">\n'
     table += '<thead>'
@@ -631,9 +630,7 @@ body {
                         cell = f"<td>{librarians[n]['name']}</td>"
                 table += cell
 
-
             table += "\n</tr>\n"
-
 
     table +=  "</tbody></table></div>"
 
@@ -648,11 +645,11 @@ body {
     """
     body = f"<body>\n{title}\n{datatables_init}\n"
     body += f"<h2>Diagnostics:</h2>\n<pre><code>{diagnostics}</code></pre>"
-    body += f"<h2>Technical statistics:</h2>"
+    body += "<h2>Technical statistics:</h2>"
     body += f"<div>{score}</div>\n<pre><code>{stat_details}</code></pre>"
-    body += f"\n<h2>Summary table (for guichetbiblio.epfl.ch)</h2>"
+    body += "\n<h2>Summary table (for guichetbiblio.epfl.ch)</h2>"
     body += f"\n{guichetbiblio_table}"
-    body += f"\n<h2>Summary table (for other use cases)</h2>"
+    body += "\n<h2>Summary table (for other use cases)</h2>"
     body += f"\n{table}"
     body += f'\n<div>{report}</div></body>'
 
