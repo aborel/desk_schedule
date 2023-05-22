@@ -602,6 +602,12 @@ body {
                         cell = f"<td>{librarians[n]['name']}</td>"
                 guichetbiblio_table += cell
             guichetbiblio_table += "</tr>\n"
+        # Empty row for better readability
+        guichetbiblio_table += "<tr>"
+        guichetbiblio_table += '<td></td>'
+        for s in all_shifts:
+            guichetbiblio_table += '<td></td>'
+        guichetbiblio_table += "</tr>\n"
 
     guichetbiblio_table += "</tbody></table></div>"
 
@@ -642,7 +648,8 @@ body {
         });
         $('#guichetbiblio').DataTable({
             "paging": false,
-            "mark": true
+            "mark": true,
+            "ordering": false
         });
     });
   </script>
