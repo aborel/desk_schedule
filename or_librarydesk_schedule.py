@@ -511,7 +511,10 @@ def main(parameter_file):
               src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"
               crossorigin="anonymous"></script>\n"""
     datatables_script += '<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.20/datatables.js"></script>'
-    #TODO add highlighting probably using https://markjs.io/
+    datatables_script += '<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>'
+    datatables_script += '<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.es6.js" integrity="sha512-4PUcRoBmsfaiXPoigt+rm4mfuXpvvwfC7dFIhHkwVQGECJzaFDMR8HGTxNDLkwC4DlJq3/EYHL77YXFr34Jmog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>'
+    datatables_script += '<script src=" https://cdn.jsdelivr.net/npm/datatables.mark.js@2.1.0/dist/datatables.mark.min.js "></script>'
+
 
     header = f"<head><title>{main_title}</title>\n{datatables_script}\n"
 
@@ -638,7 +641,8 @@ body {
     <script>
     $(document).ready(function() {
         $('#schedule').DataTable({
-    "paging": false
+    "paging": false,
+    "mark": true
 });
     });
   </script>
