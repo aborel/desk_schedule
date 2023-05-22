@@ -510,10 +510,10 @@ def main(parameter_file):
     datatables_script = """<script type="text/javascript"
               src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"
               crossorigin="anonymous"></script>\n"""
-    datatables_script += '<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.20/datatables.js"></script>'
-    datatables_script += '<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>'
-    datatables_script += '<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.es6.js" integrity="sha512-4PUcRoBmsfaiXPoigt+rm4mfuXpvvwfC7dFIhHkwVQGECJzaFDMR8HGTxNDLkwC4DlJq3/EYHL77YXFr34Jmog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>'
-    datatables_script += '<script src=" https://cdn.jsdelivr.net/npm/datatables.mark.js@2.1.0/dist/datatables.mark.min.js "></script>'
+    datatables_script += '<script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>\n'
+    datatables_script += '<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n'
+    datatables_script += '<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.es6.js" integrity="sha512-4PUcRoBmsfaiXPoigt+rm4mfuXpvvwfC7dFIhHkwVQGECJzaFDMR8HGTxNDLkwC4DlJq3/EYHL77YXFr34Jmog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n'
+    datatables_script += '<script src=" https://cdn.jsdelivr.net/npm/datatables.mark.js@2.1.0/dist/datatables.mark.min.js "></script>\n'
 
 
     header = f"<head><title>{main_title}</title>\n{datatables_script}\n"
@@ -602,10 +602,6 @@ body {
                         cell = f"<td>{librarians[n]['name']}</td>"
                 guichetbiblio_table += cell
             guichetbiblio_table += "</tr>\n"
-        guichetbiblio_table += "<tr>"
-        for s in all_shifts:
-            guichetbiblio_table += '<td></td>'
-        guichetbiblio_table += "</tr>\n"
 
     guichetbiblio_table += "</tbody></table></div>"
 
@@ -641,9 +637,13 @@ body {
     <script>
     $(document).ready(function() {
         $('#schedule').DataTable({
-    "paging": false,
-    "mark": true
-});
+            "paging": false,
+            "mark": true
+        });
+        $('#guichetbiblio').DataTable({
+            "paging": false,
+            "mark": true
+        });
     });
   </script>
     """
@@ -657,7 +657,7 @@ body {
     body += f"\n{table}"
     body += f'\n<div>{report}</div></body>'
 
-    html = f"<html>\n{header}\n{body}</html>"
+    html = f"<!DOCTYPE html>\n<html>\n{header}\n{body}</html>"
 
     outfile = open('or-desk-schedule.html', 'w')
     outfile.write(html)
