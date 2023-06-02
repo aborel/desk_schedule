@@ -298,7 +298,7 @@ def check_minima(availabilities, librarians, locations, quota, meeting_slots, ru
                 for n in range(len(librarians)):
                     test_roster[d][s][l] += availabilities[n][d][s][l]
             frameinfo = getframeinfo(currentframe())
-            log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) d {d} s {s} l {l}: roster = {test_roster[d][s][l]}')
+            log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) d {d} ({weekdays[d]}) s {s} l {l}: roster = {test_roster[d][s][l]}')
             if test_roster[d][s][0] < sum([shifts[s][0] - shifts[s][0]  >= locations[l]['times'][d]['start'] \
                 and shifts[-1][0] - shifts[s][0] <= locations[l]['times'][d]['start'] for l in range(max_location)]):
                     hh = '{:0>2}'.format(shifts[s][0]//60)
