@@ -187,14 +187,14 @@ def read_work_schedules(xlsx_filename):
                     log_message(name)
                     n += 1
                     librarians[n] = {'name': name}
-                    librarians[n]['sector'] = cells[1]
-                    librarians[n]['type'] = cells[2]
-                    librarians[n]['prefered_length'] = cells[3]
+                    librarians[n]['sector'] = cells[max_day+2]
+                    librarians[n]['type'] = cells[max_day+3]
+                    librarians[n]['prefered_length'] = cells[max_day+4]
                     # TODO replace fixed constants!
                     new_roster = numpy.zeros(shape=(max_day, max_shift, max_location), dtype=numpy.int8)
                     d = -1
                     # Extract extended work hours; skip comment columns
-                    for x in cells[7:7+max_day]:
+                    for x in cells[1:1+max_day]:
                         # TODO probably not valid for 2h shifts
                         # new day
                         d += 1
