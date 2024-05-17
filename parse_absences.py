@@ -11,7 +11,7 @@ from errors import log_message, log_error_message, get_stack_trace
 # save as HTML - full page from Firefox => should be a few hundred KBs (+ one subfolder we don't need)
 
 vacation = ('Vacances', 'Holidays', 'Compensation sur heures', 'Compensation - on hours')
-
+homeoffice = ('Télétravail', 'Teleworking')
 
 def get_all_text(node):
     if node.nodeType == node.TEXT_NODE:
@@ -111,11 +111,11 @@ def parse_absences(htmlfile):
                     start = int(styles['left'].replace('px', '')) // day_width
                     end = abs(int(styles['right'].replace('px', ''))) // day_width - 1
                     reason = get_all_text(event).strip()
-                    if reason in vacation:
-                        log_message(f'{librarians[ridx]} is on vacation ({reason}) from {known_days[start]} to {known_days[end]}')
+                    if reason not in homeoffice:
+                        log_message(f'{librarians[ridx]} is on leave ({reason}) from {known_days[start]} to {known_days[end]}')
                         vacation_data[librarians[ridx]].append((known_days[start], known_days[end]))
                     else:
-                        log_message(f'{librarians[ridx]} is off (not on vacation) due to {reason} from {known_days[start]} to {known_days[end]}')
+                        log_message(f'{librarians[ridx]} is away from work due to {reason} from {known_days[start]} to {known_days[end]}')
         with open('vacation.json', 'w') as fp:
             json.dump(vacation_data, fp)
 
