@@ -19,7 +19,7 @@ def get_start_to_end(start_date, end_date):
     for i in range(0, (end_date - start_date).days + 1):
         current_day = start_date + timedelta(days=i)
         if current_day.weekday() not in [5, 6]: 
-            date_list.append(f'{k}\t{current_day.strftime("%A %Y-%m-%d")}')
+            date_list.append(f'{k}\t{current_day.strftime("%A %d-%m-%Y")}')
             k += 1
     return date_list
 
