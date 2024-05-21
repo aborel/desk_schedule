@@ -394,8 +394,11 @@ def main(parameter_file):
         log_error_message('INFEASIBLE. Damn. Wish I knew why.')
         stat_details = f'{solver.ResponseStats()}'
         log_error_message(f"**Solver statistics:**\n{stat_details}")
-        for var_index in solver.ResponseProto().sufficient_assumptions_for_infeasibility:
-            log_message(f'var_index {var_index},  model.VarIndexToVarProto(var_index) {model.VarIndexToVarProto(var_index)}') # prints "v1"
+        # TODO figure out the actual way to browse what makes the model INFEASIBLE.
+        assump4infeasibility = eval(f'{solver.SufficientAssumptionsForInfeasibility()}')
+        log_error_message(f'{len(assump4infeasibility)} assumptions are sufficient for infeasibility')
+        for var_index in assump4infeasibility:
+            log_error_message(f'var_index {var_index},  model.var_index_to_var_proto(var_index) {model.var_index_to_var_proto(var_index)}')
         log_error_message('---')
         log_error_message('SufficientAssumptionsForInfeasibility = '
               f'{solver.SufficientAssumptionsForInfeasibility()}')
