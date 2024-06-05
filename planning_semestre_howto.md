@@ -10,6 +10,17 @@ Les jours sont lundi, mardi,... vendredi, numérotés à partir de lundi = zéro
 Unité/taux/etc: dans les colonnes **à droite** du tableau (convenu avec GR)
 
 
+## Onglet "séances"
+
+Contrôler que les définitions des séances de direction et d'unités sont correctes.
+
+
+## Onglet "quotas"
+
+Les quotas doivent avoir des valeurs pour tous les types de guichetiers (Colonne "Taux" de l'onglet guichetiers; en général c'est le taux d'activité mais il y a beaucoup d'autres types plus ou moins historiques), même si on ne les utilise pas par la suite.
+
+Les valeurs sont en heures par semaine.
+
 
 ## Règles minimales pour un premier essai
 
@@ -27,3 +38,6 @@ Le résultat ne sera pas forcément équilibré. Si ça marche, on peut essayer 
 maxActiveShifts
 
 maxReserveShifts dans un 2ème temps
+
+Les quotas max sont facilement respectés dans l'organisation en place depuis la fin du confinement. Par contre il n'y a plus assez de plages de guichet pour les quotas min définis avant 2020).
+
