@@ -6,17 +6,22 @@ Génération de planning des guichers sous contraintes.
 
 A. Borel 2021-2024
 
+# Principe
+
+Le programme prend comme contrainte les horaires des guichetiers, les séances d'unités et différentes règles optionnelles pour construire un planning complet sur une durée donnée (normalement: 1 semaine) au moyen d'un résolveur CP-SAT https://developers.google.com/optimization/cp/cp_solver . Les données lues à partir d'un fichier Excel sont converties en mémoire pour construire un modèle (`cp_model.CpModel`) à résoudre pour optimiser le recouvrement des shifts à remplir avec les shifts "demandés". 
 
 # Rapport d'expérience oct. 2022 (on a progressé depuis)
 Globalement, le programme fonctionne et donne des résultats satisfaisants, mais il n’est pas encore facilement utilisable par un non-développeur. En particulier, chaque nouvelle période de planning a impliqué quelques heures de retouche des données et d’analyse/débuggage avant de parvenir à un planning qui ne contienne pas d’erreur flagrante (résultat «passable» selon le résumé des opérations ci-dessus).
 Pour que l’approche devienne réellement intéressante, il faudrait:
-    1. standardiser une bonne fois pour toute le format du tableau de déclaration des disponibilités pour le guichet (aussi bien pour les semestres que pour les périodes de vacances universitaires) ;
-    OK 2024
-    2. améliorer le programme en termes de diagnostic: permettre d’avoir des informations sur les éventuels problèmes d’exécution sans devoir intervenir dans le code (réalisable en prinicipe à l’aide d’un fichier de log);
-    Update 2024: légers progrès, les erreurs sont enregistrées dans un log spécifique
-    3. former une personne à la bonne utilisation du logiciel (avec participation à la mise au point du fichier de log)
-    Update 2024: un guide de base pour la génération d'un planning en mode semestre ou vacances est inclus (`planning_semestre_howto.md  et `planning_vacances_howto.md`)
-    4. créer une version facilement déployable sur n’importe quel poste de travail (devrait être assez simple en utilisant la méthode conçue pour l’application acouachecksum).
+
+1. standardiser une bonne fois pour toute le format du tableau de déclaration des disponibilités pour le guichet (aussi bien pour les semestres que pour les périodes de vacances universitaires). OK 2024
+
+2. améliorer le programme en termes de diagnostic: permettre d’avoir des informations sur les éventuels problèmes d’exécution sans devoir intervenir dans le code (réalisable en prinicipe à l’aide d’un fichier de log). Update 2024: légers progrès, les erreurs sont enregistrées dans un log spécifique
+
+3. former une personne à la bonne utilisation du logiciel (avec participation à la mise au point du fichier de log). Update 2024: un guide de base pour la génération d'un planning en mode semestre ou vacances est inclus (`planning_semestre_howto.md`
+    et `planning_vacances_howto.md`)
+
+4. créer une version facilement déployable sur n’importe quel poste de travail (devrait être assez simple en utilisant la méthode conçue pour l’application acouachecksum).
 
 # Nouveautés mai 2023
 - Mini interface graphique (inspirée d'acouachecksum)
@@ -24,4 +29,4 @@ Pour que l’approche devienne réellement intéressante, il faudrait:
 
 # Données de base
 
-Les fichiers de données utilisés sont dans V:/K_Guichets/K2_Guichets_physiques/K2.04_Planification_tournus/K2.043_Projections_Scenarii . Il s'agit de données personnelles qui n'ont pas leur place dans un dépôt public.
+Les fichiers de données utilisés sont dans `V:/K_Guichets/K2_Guichets_physiques/K2.04_Planification_tournus/K2.043_Projections_Scenarii`. Il s'agit de données personnelles qui n'ont pas leur place dans un dépôt public.
