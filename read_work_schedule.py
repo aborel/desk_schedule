@@ -188,6 +188,7 @@ def read_work_schedules(xlsx_filename):
                     n += 1
                     librarians[n] = {'name': name}
                     librarians[n]['sector'] = cells[max_day+2]
+                    # TODO accept integers for types and convert to string if necessary
                     librarians[n]['type'] = cells[max_day+3]
                     librarians[n]['prefered_length'] = cells[max_day+4]
                     # TODO replace fixed constants!
