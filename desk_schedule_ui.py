@@ -14,10 +14,10 @@ from functools import partial
 from unicodedata import normalize
 
 from parse_absences import parse_absences
-from errors import error_file, error_file_header, init_error_log, log_error_message, get_stack_trace
+from errors import error_output_header, init_error_log, log_error_message, get_stack_trace
 import or_librarydesk_schedule
 
-version = "1.0"
+version = "1.1"
 
 horaires = None
 absences = None
@@ -47,32 +47,41 @@ def run_desk_schedule(tkroot, width_chars):
     global horaires
     global absences
     print(horaires)
-    print(absences)    
+    print(absences)
+    html_output = horaires.replace('.xlsx', '') + '.html'
+    html_file = html_output.split(os.sep)[-1]
+
+    log_output = horaires.replace('.xlsx', '') + '_log.txt'
+    log_file = log_output.split(os.sep)[-1]
+
+    error_output = horaires.replace('.xlsx', '') + '_errors.txt'
+    error_file = error_output.split(os.sep)[-1]
 
     error_message = f"There were errors or warnings during processing:\ncheck {error_file} for information."
 
-    init_error_log()
+    init_error_log(error_output)
     
     if absences is not None:
         if absences != '':
             parse_absences(absences)
 
     if horaires is not None:
-        # TODO call or-librarydesk-schedule, need to make it a module first
         try:
-            or_librarydesk_schedule.main(horaires)
+            or_librarydesk_schedule.main(horaires, log_output, error_output)
         except Exception as e:
-            log_error_message(get_stack_trace(e))
+            log_error_message(error_output, get_stack_trace(e))
     else:
-        log_error_message('Vous DEVEZ sélectionner un fichier XLSX contenant les horaires!')
+        log_error_message(log_output, 'Vous DEVEZ sélectionner un fichier XLSX contenant les horaires!')
 
-    f_err = open(error_file, "r")
+    f_err = open(error_output, "r")
     error_content = f_err.read()
     f_err.close()
     
-    if error_content.replace('\r', '').replace('\n', '') == error_file_header.replace('\r', '').replace('\n', ''):
-        os.remove(error_file)
-        done_info = Label(tkroot, text=f'Done: desk_schedule.html and logs have been created')
+    if error_content.replace('\r', '').replace('\n', '') == error_output_header.replace('\r', '').replace('\n', ''):
+        os.remove(error_output)
+        done_text = f'Done: {html_output_filename} has been created.'
+        done_text += '\nCheck the logfile for more details'
+        done_info = Label(tkroot, text=done_text)
         done_info.pack()
 
     else:

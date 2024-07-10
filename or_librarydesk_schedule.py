@@ -27,7 +27,7 @@ sector_semester_quotas = {
 }
 
 
-def main(parameter_file):
+def main(parameter_file, log_output, error_output):
     # This program tries to find an optimal assignment of librarians to shifts
     # (initially 10 shifts per day for 5 days), subject to various constraints.
     # Each librarian can request a personal schedule, shifts will be assigned
@@ -40,13 +40,15 @@ def main(parameter_file):
         from work_schedule import desk_shifts, msg
     elif parameter_file is not None:
         from read_work_schedule import read_work_schedules, check_minima
-        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(parameter_file)
-        msg = check_minima(shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts)
+        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(parameter_file, log_output, error_output)
+        msg = check_minima(log_output, error_output, shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts)
     else:
         from read_work_schedule import read_work_schedules, check_minima
         filename = 'Horaires-guichets.xlsx'
-        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(filename)
-        msg = check_minima(shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts)
+        log_output = filename.replace('.xlsx', '') + '_log.txt'
+        error_output = filename.replace('.xlsx', '') + '_errors.txt'
+        shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts = read_work_schedules(filename, 'desk_schedule_log.txt', 'desk_schedule_errors.txt')
+        msg = check_minima(log_output, error_output, shift_requests, librarians, locations, quota, meeting_slots, rules, weekdays, desk_shifts)
 
     diagnostics = msg
 
@@ -83,7 +85,7 @@ def main(parameter_file):
     if (total_shifts < minimum_quotas) or (total_shifts > maximum_quotas):
         diagnostics += 'Your quotas cannot be met with the proposed shifts, remember to skip a few quota rules!<br/>'
 
-    log_message(diagnostics)
+    log_message(log_output, diagnostics)
 
     # Creates the model.
     model = cp_model.CpModel()
@@ -108,7 +110,7 @@ def main(parameter_file):
         try:
             vacation = json.loads(open('vacation.json', 'r').read())
         except:
-            log_error_message('useAbsences rule selected but no vacation.json file found => ignoring directive')
+            log_error_message(error_output, 'useAbsences rule selected but no vacation.json file found => ignoring directive')
             vacation = {}
         for n in all_librarians:
             if librarians[n]["name"] not in vacation:
@@ -119,7 +121,7 @@ def main(parameter_file):
             vacation[librarians[n]['name']] = []
 
     frameinfo = getframeinfo(currentframe())
-    log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) Vacation days: {vacation}')
+    log_message(log_output, f'({frameinfo.filename}:{frameinfo.lineno + 1}) Vacation days: {vacation}')
 
     ## TODO integration vacation data into shift_requests
     for n in all_librarians:
@@ -129,15 +131,15 @@ def main(parameter_file):
             if desk_day < dateparser.parse('Sunday'):
                 desk_day += timedelta(days=7)
             frameinfo = getframeinfo(currentframe())
-            log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) {weekdays[d]} is {desk_day}')
+            log_message(log_output, f'({frameinfo.filename}:{frameinfo.lineno + 1}) {weekdays[d]} is {desk_day}')
             for leave in vacation[librarians[n]['name']]:
                 frameinfo = getframeinfo(currentframe())
-                log_message(f"({frameinfo.filename}:{frameinfo.lineno + 1}) {librarians[n]['name']} on vacation: {leave}")
+                log_message(log_output, f"({frameinfo.filename}:{frameinfo.lineno + 1}) {librarians[n]['name']} on vacation: {leave}")
                 # FIXME this doesn't really work for 1-day leaves. F
                 if (desk_day >= dateparser.parse(leave[0]) - + timedelta(minutes=1)) and \
                         (desk_day <= dateparser.parse(leave[1]) + timedelta(minutes=1)):
                     frameinfo = getframeinfo(currentframe())
-                    log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) {librarians[n]} must not work on {weekdays[d]}')
+                    log_message(log_output, f'({frameinfo.filename}:{frameinfo.lineno + 1}) {librarians[n]} must not work on {weekdays[d]}')
                     for s in all_shifts:
                         for lo in all_locations:
                             # TESTING this could be it
@@ -205,7 +207,7 @@ def main(parameter_file):
                         for s in all_shifts for lo in all_locations for d in all_days]) >= min_average_shifts)
                     n_conditions += 1
             else:
-                log_message(f'{librarians[n]["name"]} is exempted from minimum av. shifts')
+                log_message(log_output, f'{librarians[n]["name"]} is exempted from minimum av. shifts')
         model.Proto().assumptions.append(minOneShiftAverage.Index())
 
     delta_vars1 = {}
@@ -378,41 +380,41 @@ def main(parameter_file):
             for n in all_librarians for s in all_shifts for d in all_days])
         solver_multi.parameters.enumerate_all_solutions = True
         solutions_array = solver_multi.Solve(model, array_solution_printer)
-        log_message('Status = %s' % solver_multi.StatusName(status))
-        log_message('Number of solutions found: %i' % array_solution_printer.solution_count())
+        log_message(log_output, 'Status = %s' % solver_multi.StatusName(status))
+        log_message(log_output, 'Number of solutions found: %i' % array_solution_printer.solution_count())
 
 
-    log_message('')
-    log_message('Quality of the solution: definition of constants')
-    log_message('cp_model.MODEL_INVALID ' + str(cp_model.MODEL_INVALID))
-    log_message('cp_model.FEASIBLE' + str(cp_model.FEASIBLE))
-    log_message('cp_model.INFEASIBLE'  + str(cp_model.INFEASIBLE))
-    log_message('cp_model.OPTIMAL' + str(cp_model.OPTIMAL))
-    log_message(f'-\nSolved? {str(status)} {solver.StatusName()}')
+    log_message(log_output, '')
+    log_message(log_output, 'Quality of the solution: definition of constants')
+    log_message(log_output, 'cp_model.MODEL_INVALID ' + str(cp_model.MODEL_INVALID))
+    log_message(log_output, 'cp_model.FEASIBLE' + str(cp_model.FEASIBLE))
+    log_message(log_output, 'cp_model.INFEASIBLE'  + str(cp_model.INFEASIBLE))
+    log_message(log_output, 'cp_model.OPTIMAL' + str(cp_model.OPTIMAL))
+    log_message(log_output, f'-\nSolved? {str(status)} {solver.StatusName()}')
     
     if status == cp_model.INFEASIBLE:
-        log_error_message('INFEASIBLE. Damn. Wish I knew why.')
+        log_error_message(error_output, 'INFEASIBLE. Damn. Wish I knew why.')
         stat_details = f'{solver.ResponseStats()}'
-        log_error_message(f"**Solver statistics:**\n{stat_details}")
+        log_error_message(error_output, f"**Solver statistics:**\n{stat_details}")
         # TODO figure out the actual way to browse what makes the model INFEASIBLE.
         assump4infeasibility = eval(f'{solver.SufficientAssumptionsForInfeasibility()}')
-        log_error_message(f'{len(assump4infeasibility)} assumptions are sufficient for infeasibility')
+        log_error_message(error_output, f'{len(assump4infeasibility)} assumptions are sufficient for infeasibility')
         for var_index in assump4infeasibility:
-            log_error_message(f'var_index {var_index},  model.var_index_to_var_proto(var_index) {model.var_index_to_var_proto(var_index)}')
-        log_error_message('---')
-        log_error_message('SufficientAssumptionsForInfeasibility = '
+            log_error_message(error_output, f'var_index {var_index},  model.var_index_to_var_proto(var_index) {model.var_index_to_var_proto(var_index)}')
+        log_error_message(error_output, '---')
+        log_error_message(error_output, 'SufficientAssumptionsForInfeasibility = '
               f'{solver.SufficientAssumptionsForInfeasibility()}')
         raise(Exception("No solution could be found"))
 
-    log_message(diagnostics)
-    log_message('')
+    log_message(log_output, diagnostics)
+    log_message(log_output, '')
 
     #report = diagnostics
     report = ''
     for d in all_days:
         line = f'Day {d}'
         frameinfo = getframeinfo(currentframe())
-        log_message(f'({frameinfo.filename}:{frameinfo.lineno + 1}) {line}')
+        log_message(log_output, f'({frameinfo.filename}:{frameinfo.lineno + 1}) {line}')
         report += '<br/>\n' + line + '<br/>\n'
         for lo in all_locations:
             for s in all_shifts:
@@ -433,16 +435,16 @@ def main(parameter_file):
                                     or s < meeting_slots['dir'][1]
                                     or s > meeting_slots['dir'][2]):
                                 line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (OK with work hours).'
-                                log_message(line)
+                                log_message(log_output, line)
                                 report += line + '<br>\n'
                             else:
                                 line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (problem with a group meeting).'
-                                log_message(f"{line} {d} {s} {meeting_slots[librarians[n]['sector']]}")
+                                log_message(log_output, f"{line} {d} {s} {meeting_slots[librarians[n]['sector']]}")
                                 report += line + '<br>\n'                    
                         else:
                             line = f'{librarians[n]["name"]} works {length}h at {hh}:{mm} on {weekdays[d]} at {locations[lo]["name"]} (problem with work hours).'
-                            # log_message(shift_requests[n][d])
-                            log_message(line)
+                            # log_message(log_output, shift_requests[n][d])
+                            log_message(log_output, line)
                             report += line + '<br/>\n'
 
         for sector in sector_semester_quotas:
@@ -471,16 +473,16 @@ def main(parameter_file):
                 if worked_pm > 0:
                     pm_librarians += 1
             line = f'Daily shifts for {sector.upper()}: {score} (using {unique_librarians} unique librarian(s), minimum {sector_semester_quotas[sector]})'
-            log_message(line)
+            log_message(log_output, line)
             report += line + '<br/>\n'
             line = f'Morning (8h-12h): {am_librarians} librarian(s), afternoon (after 12h-20h): {pm_librarians} librarian(s)'
-            log_message(line)
+            log_message(log_output, line)
             report += line + '<br/>\n'
-    log_message('')
+    log_message(log_output, '')
     report += line + '<br/>\n'
 
     line = 'Librarians work summary'
-    log_message(line)
+    log_message(log_output, line)
     report += '<br/>\n' + line + '<br/>\n'
     for n in all_librarians:
         # TESTING updated to non-1h shifts
@@ -494,17 +496,17 @@ def main(parameter_file):
         s3 = f', with {score_days} days on duty'
         line = s1 + s2 + s3
         x = sum([solver.Value(shifts[(n, d, s, lo)]) for s in all_shifts for lo in all_locations for d in all_days])
-        log_message(line)
+        log_message(log_output, line)
         report += line + '<br/>\n'
 
-        log_message(librarians[n]['name'])
+        log_message(log_output, librarians[n]['name'])
         for d in all_days:
-            log_message(weekdays[d])
-            log_message('availability:')
-            log_message(str(shift_requests[n][d]))
-            log_message('assigned:')
+            log_message(log_output, weekdays[d])
+            log_message(log_output, 'availability:')
+            log_message(log_output, str(shift_requests[n][d]))
+            log_message(log_output, 'assigned:')
             for s in all_shifts:
-                log_message(str([solver.Value(shifts[(n, d, s, lo)]) for lo in all_locations]))
+                log_message(log_output, str([solver.Value(shifts[(n, d, s, lo)]) for lo in all_locations]))
 
     # Prepare HTML output
 
@@ -669,17 +671,17 @@ body {
 
     html = f"<!DOCTYPE html>\n<html>\n{header}\n{body}</html>"
 
-    outfile = open('or-desk-schedule.html', 'w')
+    outfile = open(parameter_file.replace('.xlsx', '') + '.html', 'w')
     outfile.write(html)
     outfile.close()
 
     # Statistics
 
-    log_message('')
-    log_message('**Statistics:**')
-    log_message(f' - {score}')
-    log_message('')
-    log_message(f"**Solver statistics:**\n{stat_details}")
+    log_message(log_output, '')
+    log_message(log_output, '**Statistics:**')
+    log_message(log_output, f' - {score}')
+    log_message(log_output, '')
+    log_message(log_output, f"**Solver statistics:**\n{stat_details}")
 
     """
     if rules['preferedRunLength']:
@@ -688,9 +690,9 @@ body {
                 for d in all_days:
                     for s in all_shifts[0:-1]:
                         for lo in all_locations:
-                            log_message(f'shifts:  {(n, d, s, lo)} {solver.Value(shifts[(n, d, s, lo)])}')
-                        log_message(f'delta1: {(n, d, s, lo)} {solver.Value(delta_vars1[(n, d, s)])}')
-                        log_message(f'delta2: {(n, d, s, lo)} {solver.Value(delta_vars2[(n, d, s)])}')
+                            log_message(log_output, f'shifts:  {(n, d, s, lo)} {solver.Value(shifts[(n, d, s, lo)])}')
+                        log_message(log_output, f'delta1: {(n, d, s, lo)} {solver.Value(delta_vars1[(n, d, s)])}')
+                        log_message(log_output, f'delta2: {(n, d, s, lo)} {solver.Value(delta_vars2[(n, d, s)])}')
     """
 
 
@@ -701,7 +703,7 @@ if __name__ == '__main__':
     parser.add_argument('--file', help='read from Excel sheet')
 
     args = parser.parse_args()
-    log_message(str(args))
+    log_message(log_output, str(args))
 
     if args.no_file:
         filename = ''
@@ -710,4 +712,6 @@ if __name__ == '__main__':
     else:
         filename = 'Horaires-guichets.xlsx'
 
-    main(filename)
+    log_output = filename.replace('.xlsx', '') + '_log.txt'
+    error_output = filename.replace('.xlsx', '') + '_errors.txt'
+    main(filename, log_output, error_output)
