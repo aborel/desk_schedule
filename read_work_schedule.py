@@ -190,7 +190,7 @@ def read_work_schedules(xlsx_filename):
                     librarians[n]['sector'] = cells[max_day+2].strip()
                     # we must accept integers and convert to string if necessary
                     librarians[n]['type'] = f'{cells[max_day+3]}'.strip()
-                    librarians[n]['prefered_length'] = f'{cells[max_day+4]}'.strip()
+                    librarians[n]['prefered_length'] = cells[max_day+4]
                     # TODO replace fixed constants!
                     new_roster = numpy.zeros(shape=(max_day, max_shift, max_location), dtype=numpy.int8)
                     d = -1
