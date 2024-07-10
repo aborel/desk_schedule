@@ -183,14 +183,14 @@ def read_work_schedules(xlsx_filename):
             if row[0] is not None:
                 cells = [cell.value for cell in row]
                 if cells[0] is not None:
-                    name = cells[0]
+                    name = cells[0].strip()
                     log_message(name)
                     n += 1
                     librarians[n] = {'name': name}
-                    librarians[n]['sector'] = cells[max_day+2]
-                    # TODO accept integers for types and convert to string if necessary
-                    librarians[n]['type'] = cells[max_day+3]
-                    librarians[n]['prefered_length'] = cells[max_day+4]
+                    librarians[n]['sector'] = cells[max_day+2].strip()
+                    # we must accept integers and convert to string if necessary
+                    librarians[n]['type'] = f'{cells[max_day+3]}'.strip()
+                    librarians[n]['prefered_length'] = f'{cells[max_day+4]}'.strip()
                     # TODO replace fixed constants!
                     new_roster = numpy.zeros(shape=(max_day, max_shift, max_location), dtype=numpy.int8)
                     d = -1
@@ -208,7 +208,8 @@ def read_work_schedules(xlsx_filename):
                             x = x.replace('.', 'h').replace(':', 'h').replace('hh', 'h').replace('h-', 'h00-')
                             boundaries = [b.strip() for b in x.split('-')]
                             if len(boundaries) < 2:
-                                log_message(f'WTF {x}')
+                                # something unexpected was found, boundaries were not read properly
+                                log_error_message(f'WTF {x}')
                             else:
                                 log_message(f'Boundaries: {boundaries}')
                                 int_boundaries = []

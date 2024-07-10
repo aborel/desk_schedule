@@ -12,6 +12,7 @@ def log_error_message(message):
     f_err = open(error_file, "a")
     f_err.write(message + '\n')
     f_err.close()
+    log_message(message)
 
 
 def log_message(message):
