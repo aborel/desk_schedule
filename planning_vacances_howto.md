@@ -12,6 +12,7 @@ Les jours fériés sont à enlever en dernier lieu.
 
 Unité/taux/etc: dans les colonnes **à droite** du tableau (convenu avec GR)
 
+Le nom des guichetiers doit absolument être indiqué comme dans Absences v2. Selon les informations reçues de la DSI (INC0648134), la forme est le premier prénom suivi du nom de famille complet tiré des documents d'identité EPFL. C'est le standard de SAP, les noms d'usage qu'on peut avoir dans l'annuaire et/ou l'e-mail ne s'appliquent pas.
 
 
 ## Export des congés depuis Absences V2
