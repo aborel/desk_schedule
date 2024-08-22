@@ -63,7 +63,7 @@ def run_desk_schedule(tkroot, width_chars):
     
     if absences is not None:
         if absences != '':
-            parse_absences(absences)
+            parse_absences(absences, log_output, error_output)
 
     if horaires is not None:
         try:

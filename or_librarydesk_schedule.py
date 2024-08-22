@@ -112,6 +112,13 @@ def main(parameter_file, log_output, error_output):
         except:
             log_error_message(error_output, 'useAbsences rule selected but no vacation.json file found => ignoring directive')
             vacation = {}
+        # TODO check for name mismatches
+        absence_names = vacation.keys()
+        input_names = [librarians[n]["name"] for n in all_librarians]
+        no_vacation_names = [name for name in input_names if name not in absence_names]
+        for name in no_vacation_names:
+            log_message(log_output, f'({name} has no vacation days, maybe check for possible name mismatch?')
+
         for n in all_librarians:
             if librarians[n]["name"] not in vacation:
                 vacation[librarians[n]['name']] = []
