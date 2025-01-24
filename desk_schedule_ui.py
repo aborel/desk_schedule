@@ -79,7 +79,7 @@ def run_desk_schedule(tkroot, width_chars):
     
     if error_content.replace('\r', '').replace('\n', '') == error_output_header.replace('\r', '').replace('\n', ''):
         os.remove(error_output)
-        done_text = f'Done: {html_output_filename} has been created.'
+        done_text = f'Done: {html_file} has been created.'
         done_text += '\nCheck the logfile for more details'
         done_info = Label(tkroot, text=done_text)
         done_info.pack()
